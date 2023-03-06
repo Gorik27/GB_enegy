@@ -1,0 +1,127 @@
+# INITIALIZATION
+clear
+
+units metal
+atom_style atomic
+boundary p p p
+
+region	box block 0 1 0 1 0 1 units lattice
+create_box 3 box
+
+variable name index STGB_210 #should be selected by user
+variable structure_name index surface_thermal_relaxed_T500_steps1000.dat #should be selected by user
+
+variable self index segregation
+variable dat index dat
+variable path0 index workspace
+variable pot_path index potentials
+variable home index scripts
+variable thermo_output index thermo_output
+variable dump index dump
+variable structure index ${path0}/${name}/${dat}/${structure_name}
+variable path index ${path0}/${name}
+
+shell mkdir ../${path}/logs
+log ../${path}/logs/${self}.log
+shell rm log.lammps
+
+shell mkdir ../${path}/${dat}
+
+variable conc_f index -1
+variable kappa_f index -1
+
+variable thermo_step_S equal 500
+variable dump_step_S equal 500
+variable rnd_seed_S index 12345
+variable zlo_mobile_S equal 6.7
+variable md_steps equal 100
+variable mc_steps equal 10
+variable kappa equal 10
+include ../${path}/input.txt #T, dt, potnames, conc, [S_n(x,y,z), mu, kappa, md_steps, mc_steps, zlo_mobile_STR, thermo_step_STR, dump_step_STR, rnd_seed_STR]
+print " "
+print "%%%%%%%%%%%%%%%%%%%%%%%%%"
+print "----------input----------"
+shell cat ../${path}/input.txt
+print " "
+print "%%%%%%%%%%%%%%%%%%%%%%%%%"
+print " "
+variable mu0 index 1
+variable mu equal ${mu0}
+variable dt equal ${dt_S}
+variable potname index ${potname}
+if "${conc_f}!=-1" then "variable conc equal ${conc_f}"
+if "${kappa_f}!=-1" then "variable kappa equal ${kappa_f}"
+
+variable dump_path index ${path}/${dump}/${self}
+shell mkdir ../${path}/${dump}
+shell mkdir ../${dump_path}
+
+timestep ${dt}
+
+# ATOMS DEFINITION
+read_data ../${structure} add append
+######################################
+# DEFINE INTERATOMIC POTENTIAL
+
+shell cd ../${pot_path}
+include ${potname}
+shell cd ../${home}
+
+######################################
+# FIXES
+#group fixed type 2
+#group mobile type 1 3
+#set type 2 type 1
+
+#fix freeze fixed setforce 0.0 0.0 0.0
+fix NVT all nvt temp ${T} ${T} $(100*dt) 
+#velocity mobile create ${T} 12345 mom no rot no
+velocity all create ${T} 12345 mom no rot no
+#velocity fixed set 0.0 0.0 0.0
+variable velocity atom "sqrt(vx*vx+vy*vy+vz*vz)"
+variable conc_fix_out equal "f_sgcmc[5]*100"#"count(impurity)/count(all)*100"
+variable conc_fix equal "f_sgcmc[5]"#"count(impurity)/count(mobile)*100"
+#variable conc_sgc equal "v_conc*count(all)/count(mobile_init)"
+#print "$(v_conc_sgc)"
+variable conc_fix_Ag equal "f_sgcmc[3]*100"
+thermo_style custom step time temp pe v_conc_fix_out v_conc_fix_Ag v_mu
+thermo ${thermo_step_S}
+shell mkdir ../${path}/${thermo_output}
+variable file index ../${path}/${thermo_output}/${self}_${element2}_${conc}_k_${kappa}.txt
+print "thermo output file: ${file}"
+print "##dt = ${dt}" file ${file} screen no
+print "#time; temp; pe; conc" append ${file} screen no
+fix out all print ${thermo_step_S} "$(time); $(temp); $(pe); $(1-v_conc_fix_out)" append ${file} screen no
+dump 1 all cfg ${dump_step_S} ../${dump_path}/dump_${element2}_${conc}_k_${kappa}_*.cfg mass type xs ys zs v_velocity
+dump_modify 1 element ${element1} Au ${element2}
+print "dumpfile ../${dump_path}/dump_${element2}_${conc}_k_${kappa}_0.cfg"
+fix avg_conc all ave/time ${md_steps} ${mc_steps} $(v_md_steps*v_mc_steps) v_conc_fix file  ../${path}/${thermo_output}/conc_avg.txt
+
+######################################
+# START
+fix sgcmc all sgcmc ${md_steps} 1 ${T} 1000000 ${mu} variance ${kappa} 0 $(v_conc/100)
+print """
+
+
+VCSGCMC
+
+
+"""
+label main_loop
+run $(v_md_steps*v_mc_steps)
+print "vcsgc_loop"
+print "mu = ${mu}"
+variable mut equal ${mu}
+variable mu delete
+print "avg_conc = $(f_avg_conc)"
+variable mu equal $(v_mut+(f_avg_conc-v_conc/100)/v_dmu)
+variable mut delete
+print "mu = ${mu}"
+unfix sgcmc
+fix sgcmc all sgcmc ${md_steps} 1 ${T} 1000000 ${mu} variance ${kappa} 0 $(v_conc/100)
+
+shell cd ../${path}/${dat}
+write_data ${self}_${element2}_${conc}_k_${kappa}.dat
+print "datfile ${self}_${element2}_${conc}_k_${kappa}.dat"
+shell cd ../../../${home} 
+jump SELF main_loop

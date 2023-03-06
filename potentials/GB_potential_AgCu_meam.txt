@@ -1,0 +1,4 @@
+pair_style meam/c
+pair_coeff * * library_AgCu.meam Ag Cu AgCu.meam Ag Cu
+neighbor 2.0 bin 
+neigh_modify delay 10 check yes 

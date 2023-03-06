@@ -1,0 +1,6 @@
+slope width 1000
+step 100
+rolling mean width 50
+offset 0
+converged slope 1
+number of points for convergence 10
