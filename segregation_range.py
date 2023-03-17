@@ -7,8 +7,9 @@ sys.path.insert(1, f'{sys.path[0]}/scripts')
 from set_lammps import lmp
 from plot_segregation import main as plot
 import logging
+from datetime import datetime
 now = datetime.now()
-current_time = now#.strftime("%H:%M:%S")
+current_time = now.strftime("%Y-%m-%d %H:%M:%S")
 
 def main(args):
     nonverbose = (not args.verbose)
@@ -16,11 +17,12 @@ def main(args):
     name = args.name
     structure = args.structure
     N_loops = args.loops
-    logname = f'segregation_GB_c_{args.conc}_k_{args.kappa}'
+    logname = f'segregation_range_c_{args.conc}_N_{args.conc_num}_k_{args.kappa}'
     logging.basicConfig(filename=f'workspace/{name}/{logname}.log', 
                         encoding='utf-8', 
                         format='%(message)s',
                         level=logging.INFO)
+
     logging.info(f"""
 ################
     START
@@ -53,10 +55,8 @@ def main(args):
 
     print(os.getcwd())
     logging.info(os.getcwd())
-
     if (os.path.abspath(os.getcwd()).split('/'))[-1]!='scripts':
         os.chdir('scripts')
-
     print(os.getcwd())
     logging.info(os.getcwd())
 
@@ -69,16 +69,30 @@ def main(args):
 
     restart_flag = True
 
+    conc_range = np.linspace(0, args.conc, num=args.conc_num)
+    step_ind = 0
     while restart_flag:
+        msg = (f"""
+        
+#### NEW STEP ####
+        
+C = {conc_range[step_ind]} 
+step = {step_ind}/{args.conc_num}
+
+##################
+        """)
+        print(msg)
+        logging.info(msg)
         task = (f'{lmp} -in  {routine} ' + mu_arg +
                 f'-var name {name} ' + 
                 struct_flag +
-                f'-var conc_f {args.conc} -var kappa_f {args.kappa} ' + 
+                f'-var conc_f {conc_range[step_ind]} -var kappa_f {args.kappa} ' + 
                 f'-pk omp {job} ' +
                 f'-sf omp')
 
-        print(task)
-        logging.info(task)
+        msg = task
+        print(msg)
+        logging.info(msg)
 
         counter = 0
         N_conv = 0
@@ -104,23 +118,25 @@ def main(args):
                     datfile = (line.replace('datfile ', '')).replace('\n', '')
                 elif "mu = " in line:
                     mu = float((line.replace('\n', '')).split(' ')[-1])
-                    print(mu)
                 elif "vcsgc_loop" in line:
                     if restart_flag:
                         restart_flag = False
                     counter += 1
-                    print('loop', counter)
-                    logging.info(f'loop {counter}')
+                    msg = f'loop {counter}'
+                    print(msg)
+                    logging.info(msg)
                 elif "Per-node simulation cell is too small for fix sgcmc" in line:
                     raise ValueError(line)
 
                 if nonverbose:
                     if '!' in line:
-                        print(line.replace('!', ''), end='')
-                        logging.info(line.replace('!', '').replace('\n', ''))
-                else:
-                    print(line, end='') 
-                    logging.info(line.replace('\n', ''))  
+                        msg = line.replace('!', '').replace('\n', '')
+                        print(msg)
+                        logging.info(msg)
+                else:   
+                    msg = line.replace('\n', '')
+                    print(msg)
+                    logging.info(msg)
                 if (counter != last_counter) and (counter%N_loops == 0):
                     last_counter = counter
                     impath = f'../workspace/{name}/images'
@@ -173,16 +189,19 @@ def main(args):
                         if slope[-1]>slope_conv:
                             N_conv = 0
                         
-                    print('convergence criteria achieved in', N_conv, 'points')
-                    logging.info(f'convergence criteria achieved in {N_conv} points')
+                    msg = f'convergence criteria achieved in {N_conv} points'
+                    print(msg)
+                    logging.info(msg) 
 
                     if N_conv >= N_conv_criteria:
                         if datfile == '':
-                            print('Error: unrecognized datfile')
-                            logging.info('Error: unrecognized datfile')
+                            msg = 'Error: unrecognized datfile'
+                            print(msg)
+                            logging.info(msg) 
                         else:
-                            print(f'saving state for sampling: {file_count+1}')
-                            logging.info(f'saving state for sampling: {file_count+1}')
+                            msg = f'saving state for sampling: {file_count+1}'
+                            print(msg)
+                            logging.info(msg) 
                             file = datfile.replace("\n", "")
                             outfile = file.replace('.dat', '') + f'_n{file_count}.dat'
                             fpath = f'../workspace/{name}/dat/{file}'  
@@ -193,20 +212,37 @@ def main(args):
                             if file_count >= args.samples:
                                 exitflag = True
                                 p.kill()
-                                print('All done!')
-                                logging.info('All done!')
+                                msg = 'Step done!'
+                                print(msg)
+                                logging.info(msg) 
         if not exitflag:
-            print('\n!!!!!!!!!!!!!!!!!\n\nError occured in LAMMPS')
-            logging.info('\n!!!!!!!!!!!!!!!!!\n\nError occured in LAMMPS')
+            msg = '\n!!!!!!!!!!!!!!!!!\n\nError occured in LAMMPS'
+            print(msg)
+            logging.info(msg) 
             if restart_flag:
                 raise ValueError('Error in LAMMPS, check input script and log file')
             else:
-                print('\n!!!!!!!!!!!!!!!!!\n\nRestarting simulation\n\n!!!!!!!!!!!!!!!!!\n\n')
-                logging.info('\n!!!!!!!!!!!!!!!!!\n\nRestarting simulation\n\n!!!!!!!!!!!!!!!!!\n\n')
+                msg = '\n!!!!!!!!!!!!!!!!!\n\nRestarting simulation\n\n!!!!!!!!!!!!!!!!!\n\n'
+                print(msg)
+                logging.info(msg) 
                 restart_flag=True  
                 routine = 'in.segregation_r'
                 struct_flag = ''
                 mu_arg = f'-var mu0 {mu} '
+        else:
+            msg = 'success'
+            print(msg)
+            logging.info(msg) 
+            step_ind += 1
+            restart_flag=True  
+            routine = 'in.segregation_r'
+            struct_flag = ''
+            mu_arg = f'-var mu0 {mu} '
+            if step_ind >= args.conc_num:
+                msg = 'All done'
+                print(msg)
+                logging.info(msg) 
+                break
 
 
 if __name__ == '__main__':
@@ -218,7 +254,8 @@ if __name__ == '__main__':
     parser.add_argument("-r", "--restart", required=False, default=False, action='store_true')
     parser.add_argument("-j", "--job", required=False, default=1)
     parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50)
-    parser.add_argument("-c", "--conc", required=False, default=-1, type=float)
+    parser.add_argument("-c", "--conc", help='max concentration', required=True, type=float)
+    parser.add_argument("-N", "--conc-num", dest='conc_num', required=True, type=int)
     parser.add_argument("--mu", required=False, default=None, type=float)
     parser.add_argument("-k", "--kappa", required=False, default=-1, type=float)
     parser.add_argument("-p", "--plot", required=False, default=False, action='store_true',

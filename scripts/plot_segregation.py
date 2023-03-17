@@ -37,8 +37,7 @@ def main(args):
         for line in f:
             if '##Natoms' in line:
                 Natoms = int(line.split(' ')[-1])
-    print(f'N_atoms {Natoms}')
-    df = pd.read_csv(file, sep=';', comment='#', names=['time','temp', 'pe', 'conc'])
+    df = pd.read_csv(file, sep=';', comment='#', names=['time','temp', 'pe', 'conc', 'mu'])
     t_ = df['time']
     pe_ = df['pe']/Natoms
     c_ = (1-df['conc'])*100
@@ -105,12 +104,14 @@ def main(args):
     plt.savefig(f"../workspace/{args.name}/images/{(args.src).replace('.txt', '')}_{args.postfix}.png")
     if not args.hide:
         plt.show()
+    else:
+        plt.close()
     return res, np.mean(pe1[-w:])
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("-n", "--name", required=True)
-    arser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
+    parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
     parser.add_argument("-s", "--structure", required=True, dest='src')
     parser.add_argument("--slope-conv", dest='slope_conv', default=0.001)
     parser.add_argument("--w", type=int, default=3000, required=False, help='width of linear regression region for calculating slope')
