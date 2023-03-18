@@ -11,11 +11,15 @@ parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
+parser.add_argument("--save", default=False, action='store_true', required=False,
+    help='save plot data in file')
+parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
 parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
 parser.add_argument("--min-grain", dest='min_grain', required=False, default=1000, type=int)
 parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
+parser.add_argument("--thermo", required=False, default='berendsen_relax')
 args = parser.parse_args()
 
 os.chdir('scripts')
@@ -91,7 +95,7 @@ from scripts.plot_thermal_relax import main as plot
 plot_args = parser.parse_args()
 plot_args.name = args.name
 plot_args.n = args.mean_width
-plot_args.inp = 'berendsen_relax'
+plot_args.inp = args.thermo
 plot(plot_args)
 
 print('All done')

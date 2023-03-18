@@ -12,11 +12,11 @@ def main(args):
     inp = args.inp
     file = f"../workspace/{name}/thermo_output/{inp}.txt"
     print(file)
-    df = pd.read_csv(file, sep=';', comment='#', names=['t','T', 'P', 'pe'])
-    t = df['t']
+    df = pd.read_csv(file, sep='; ', comment='#', header=0, index_col=None)
+    t = df['time']
     pe = df['pe']
-    T = df['T']
-    P = df['P']
+    T = df['temp']
+    P = df['press']
     N = []
     g_N = []
     g_Nmax = []
@@ -73,7 +73,7 @@ def main(args):
 
     pe1 = rolling_mean(pe, n)
     P1 = rolling_mean(P, n)
-    t1 = t[len(pe)-len(pe1):]
+    t1 = rolling_mean(t, n)
     t = np.array(t)
     t1 = np.array(t1)
 
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", required=True, help='for example STGB_210')
     parser.add_argument("-n", required=True, type=int)
-    arser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
+    parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
     parser.add_argument("--offset", required=False, type=int, default=0)
     parser.add_argument("--inp", required=True)
     parser.add_argument("-s", "--save", default=False, action='store_true', required=False,

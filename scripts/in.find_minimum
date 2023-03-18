@@ -27,7 +27,7 @@ create_atoms 1 box
 replicate 1 1 1
 
 shell cd ../${pot_path}
-include ${potname_pure}
+include ${potname_single}
 shell cd ../scripts
 
 # ---------- Run Minimization --------------------- 
@@ -66,7 +66,7 @@ create_atoms 1 box
 replicate 1 1 1
 
 shell cd ../${pot_path}
-include ${potname_pure}
+include ${potname_single}
 shell cd ../scripts
 
 # ---------- Run Minimization --------------------- 

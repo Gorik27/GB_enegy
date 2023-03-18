@@ -13,14 +13,15 @@ parser.add_argument("-l", "--langevin", default=False, action='store_true', requ
                     help='use langevin thermostat instead of Noose-Hover')
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
+parser.add_argument("--save", default=False, action='store_true', required=False,
+    help='save plot data in file')
+parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
 parser.add_argument("-t", "--thermo", default=False, required=False, help='name of thermo output [should be passed in case of only plotting]')
 parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
 parser.add_argument("--min-grain", dest='min_grain', required=False, default=1000, type=int)
 parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
-parser.add_argument("--save", default=False, action='store_true', required=False,
-                    help='save plotting data in file') 
 args = parser.parse_args()
 
 os.chdir('scripts')

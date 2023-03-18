@@ -49,7 +49,7 @@ read_data ../${structure}
 # DEFINE INTERATOMIC POTENTIAL
 
 shell cd ../${pot_path}
-include ${potname_pure}
+include ${potname_single}
 shell cd ../${home}
 
 ######################################
