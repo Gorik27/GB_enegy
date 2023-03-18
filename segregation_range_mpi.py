@@ -115,7 +115,7 @@ step = {step_ind}/{args.conc_num}
 """)
         print(msg)
         logging.info(msg)
-        if args.jobs = 1:
+        if args.jobs == 1:
             suffix = ''
         else:
             suffix = f' -sf omp -pk omp {args.jobs} '
