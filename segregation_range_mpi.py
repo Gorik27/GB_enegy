@@ -115,12 +115,16 @@ step = {step_ind}/{args.conc_num}
 """)
         print(msg)
         logging.info(msg)
+        if args.jobs = 1:
+            suffix = ''
+        else:
+            suffix = f' -sf omp -pk omp {args.jobs} '
+        
         task = (f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in  {routine} ' + mu_arg +
                 f'-var name {name} ' + 
                 struct_flag +
                 f'-var conc_f {conc_range[step_ind]} -var kappa_f {args.kappa} ' + 
-                f'-pk omp {job} ' +
-                f'-sf omp')
+                suffix)
 
         msg = task
         print(msg)

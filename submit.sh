@@ -10,6 +10,6 @@ module purge
 module load intel
 module load openmpi3
 
-python -u segregation_range_mpi.py -n range1 -r --mu 1.544 --np 27 -j 3 -c 30 -N 31 --samples 5 --loops 30 > $name.out
+python -u berendsen_mpi.py -n large --np 64 > $name.out
 EOF
 sbatch task
