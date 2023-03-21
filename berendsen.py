@@ -105,7 +105,7 @@ impath = f'../workspace/{args.name}/images'
 Path(impath).mkdir(exist_ok=True)  
 outpath = f'../workspace/{args.name}/thermo_output'
 Path(outpath).mkdir(exist_ok=True)  
-from scripts.plot_thermal_relax import main as plot
+from plot_thermal_relax import main as plot
 plot_args = parser.parse_args()
 plot_args.name = args.name
 plot_args.n = args.mean_width

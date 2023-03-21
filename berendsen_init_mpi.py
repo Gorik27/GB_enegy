@@ -9,6 +9,7 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
+parser.add_argument("--np", required=False, default=1)
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("--save", default=False, action='store_true', required=False,
@@ -37,8 +38,12 @@ if not args.plot:
         if not flag:
             raise ValueError(f'cannot find structure in conf.txt')
 
-
-    task = f'{lmp} -in in.berendsen_relax_init -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
+    if args.jobs == 1:
+        suffix = ''
+    else:
+        suffix = f' -sf omp -pk omp {args.jobs} '
+    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.berendsen_relax_init -var name {args.name} -var structure_name {structure} {suffix}'
+    
     exitflag = False
     db_flag = False
     db = 0

@@ -43,7 +43,7 @@ def main(args):
         flag=False
         with open(fname, 'r') as f :
             for line in f:
-                if 'relaxed' in line:
+                if 'berendsen' in line:
                     structure = line.split()[-1]
                     print(structure)
                     flag = True
@@ -115,10 +115,10 @@ step = {step_ind}/{args.conc_num}
 """)
         print(msg)
         logging.info(msg)
-        if args.jobs == 1:
+        if args.job == 1:
             suffix = ''
         else:
-            suffix = f' -sf omp -pk omp {args.jobs} '
+            suffix = f' -sf omp -pk omp {args.job} '
         
         task = (f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in  {routine} ' + mu_arg +
                 f'-var name {name} ' + 
@@ -310,6 +310,7 @@ if __name__ == '__main__':
     parser.add_argument("--ovito", required=False, default=False, action='store_true',
                         help='open the dump in ovito')
     parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
+    parser.add_argument("--thermo", required=False, default='berendsen_relax')
     args = parser.parse_args()
     main(args)
 

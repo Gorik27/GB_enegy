@@ -9,6 +9,9 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
+parser.add_argument("--np", required=False, default=1)
+parser.add_argument("-l", "--langevin", default=False, action='store_true', required=False, 
+                    help='use langevin thermostat instead of Noose-Hover')
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("--save", default=False, action='store_true', required=False,
@@ -37,11 +40,20 @@ if not args.plot:
         if not flag:
             raise ValueError(f'cannot find structure in conf.txt')
 
+    if args.langevin:
+        script = 'in.berendsen_relax_langevin'
+    else:
+        script = 'in.berendsen_relax'
 
-    task = f'{lmp} -in in.berendsen_relax_init -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
+    if args.jobs == 1:
+        suffix = ''
+    else:
+        suffix = f' -sf omp -pk omp {args.jobs} '
+    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in {script} -var name {args.name} -var structure_name {structure} {suffix}'
     exitflag = False
     db_flag = False
     db = 0
+    error_msg = ''
 
     print('starting LAMMPS...')
     print(task)
@@ -51,14 +63,21 @@ if not args.plot:
         for line in p.stdout:
             if "Dangerous builds" in  line:
                 db = int(line.split()[-1])
-                if db>0:
+                if db!=0:
+                    print('Dengerous builds:', db)
                     db_flag = True
             elif "dumpfile" in line:
                 dumpfile = (line.replace('dumpfile ', '')).replace('\n', '')
             elif "datfile" in line:
                 datfile = (line.replace('datfile ', '')).replace('\n', '')
+            elif "thermo output" in line:
+                thermo = (line.replace('thermo output ', '')).replace('\n', '')
             elif "All done" in line:
                 exitflag = True
+            elif "ERROR" in line:
+                print(line)
+                error_msg = line.replace('ERROR: ', '')
+            
             if not args.verbose:
                 if '!' in line:
                     print(line.replace('!', ''), end='')
@@ -66,10 +85,11 @@ if not args.plot:
                 print(line, end='')   
                     
     if not exitflag:
-        raise ValueError('Error in LAMMPS')
+        raise ValueError(f'Error in LAMMPS: {error_msg}')
 
     print('done\n')
-    print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
+    if db_flag:
+        print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
 
     output=''
     flag = False
@@ -95,7 +115,9 @@ from plot_thermal_relax import main as plot
 plot_args = parser.parse_args()
 plot_args.name = args.name
 plot_args.n = args.mean_width
-plot_args.inp = args.thermo
+if args.thermo:
+    thermo = args.thermo
+plot_args.inp = thermo.replace('.txt', '')
 plot(plot_args)
 
 print('All done')
