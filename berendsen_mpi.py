@@ -12,6 +12,9 @@ parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--np", required=False, default=1)
 parser.add_argument("-l", "--langevin", default=False, action='store_true', required=False, 
                     help='use langevin thermostat instead of Noose-Hover')
+parser.add_argument("--heat", default=False, action='store_true', required=False, 
+                    help='heat from T0 to T')
+parser.add_argument("--T0", required=False, default=None, type=float, help='use with flag --heat')                   
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("--save", default=False, action='store_true', required=False,
@@ -42,6 +45,8 @@ if not args.plot:
 
     if args.langevin:
         script = 'in.berendsen_relax_langevin'
+    elif args.heat:
+        script = f'in.berendsen_relax_heat -var T0 {args.T0}'
     else:
         script = 'in.berendsen_relax'
 

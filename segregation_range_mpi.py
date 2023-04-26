@@ -24,7 +24,7 @@ def main(args):
             for line in f:
                 if 'variable kappa equal' in line:
                     kappa = float(line.split(' ')[-1])
-    logname = f'segregation_range_c_{args.conc}_N_{args.conc_num}_k_{kappa}'
+    logname = f'segregation_range_c_{args.conc1}_{args.conc2}_N_{args.conc_num}_k_{kappa}'
     logging.basicConfig(filename=f'workspace/{name}/{logname}.log', 
                         encoding='utf-8', 
                         format='%(message)s',
@@ -64,10 +64,10 @@ def main(args):
     print(os.getcwd())
     logging.info(os.getcwd())
 
-    conc_range = np.linspace(0, args.conc, num=args.conc_num)
+    conc_range = np.linspace(args.conc1, args.conc2, num=args.conc_num)
     step_ind = 0
 
-    output_file = f"../workspace/{args.name}/segregation_range_c_{args.conc}_n_{args.conc_num}_{args.postfix}.txt"
+    output_file = f"../workspace/{args.name}/segregation_range_c_{args.conc1}_{args.conc2}_n_{args.conc_num}_{args.postfix}.txt"
     if not os.path.isfile(output_file):
         with open(output_file, 'a') as f:
             f.write('segregation range output\n')
@@ -255,7 +255,7 @@ step = {step_ind}/{args.conc_num}
                                 msg = f'Step done!\nE {E_mean}\nmu {mu}'
                                 print(msg)
                                 logging.info(msg) 
-                                output_file = f"../workspace/{args.name}/segregation_range_c_{args.conc}_n_{args.conc_num}_{args.postfix}.txt"
+                                output_file = f"../workspace/{args.name}/segregation_range_c_{args.conc1}_{args.conc2}_n_{args.conc_num}_{args.postfix}.txt"
                                 with open(output_file, 'a') as f:
                                     f.write(f'{conc_range[step_ind]},{E_mean},{mu}\n')
         if not exitflag:
@@ -297,7 +297,8 @@ if __name__ == '__main__':
     parser.add_argument("-j", "--job", required=False, default=1)
     parser.add_argument("--np", required=False, default=1)
     parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50)
-    parser.add_argument("-c", "--conc", help='max concentration', required=True, type=float)
+    parser.add_argument("-c1", "--conc1", help='min concentration', required=True, type=float)
+    parser.add_argument("-c2", "--conc2", help='max concentration', required=True, type=float)
     parser.add_argument("-N", "--conc-num", dest='conc_num', required=True, type=int)
     parser.add_argument("--mu", required=False, default=None, type=float)
     parser.add_argument("-k", "--kappa", required=False, default=-1, type=float)
