@@ -76,7 +76,7 @@ fix NVT all langevin ${T} ${T} $(100*dt) 12345
 fix integrate all nph iso 0.0 0.0 $(1000*dt)
 
 variable conc_fix equal f_sgcmc[4]*100
-thermo_style custom step time temp pe v_conc_fix v_mu
+thermo_style custom step time temp pe v_conc_fix v_mu press
 thermo ${thermo_step_S}
 shell mkdir ../${gbpath}/${thermo_output}
 variable file index ../${gbpath}/${thermo_output}/${self}_${conc}_k_${kappa}.txt

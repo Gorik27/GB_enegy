@@ -20,7 +20,7 @@ variable structure index ${path}/${dat}/${structure_name}
 
 shell mkdir ../${path}/logs
 log ../${path}/logs/${self}.log
-shell rm log.lammps
+#shell rm log.lammps
 
 shell mkdir ../${path}/${dat}
 
