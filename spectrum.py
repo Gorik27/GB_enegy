@@ -3,6 +3,7 @@ import argparse, os, sys, shutil
 from subprocess import Popen, PIPE
 import time, re, shutil, sys, glob
 import numpy as np
+
 sys.path.insert(1, f'{sys.path[0]}/scripts')
 from set_lammps import lmp
 
@@ -33,8 +34,9 @@ if not args.plot:
         if not flag:
             raise ValueError(f'cannot find structure in conf.txt')
 
+    res_name = 'CNA'
 
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.minimize -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
+    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.CNA -var name {args.name} -var structure_name {structure} -var self {res_name} -sf omp -pk omp {args.jobs}'
     exitflag = False
     db_flag = False
     db = 0
@@ -53,6 +55,9 @@ if not args.plot:
                 dumpfile = (line.replace('dumpfile ', '')).replace('\n', '')
             elif "datfile" in line:
                 datfile = (line.replace('datfile ', '')).replace('\n', '')
+            elif "Seg energy" in line:
+                print((line.replace('Seg energy ', '')).replace('\n', ''))
+                E = float((line.replace('Seg energy ', '')).replace('\n', ''))
             elif "All done" in line:
                 exitflag = True
             if not args.verbose:
@@ -65,33 +70,7 @@ if not args.plot:
         raise ValueError('Error in LAMMPS')
 
     print('done\n')
-    print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
-
-    output=''
-    flag = False
-    with open(f'../workspace/{args.name}/conf.txt', 'r') as f :
-        for line in f:
-            if 'minimized' in line:
-                line = f'minimized {datfile}\n'
-                flag=True
-                print(line)
-                output += line
-        if not flag:
-            output += f'minimized {datfile}\n'
-
-        with open(f'../workspace/{args.name}/conf.txt', 'w') as f:
-            f.write(output)
-
-print('plotting...')
-impath = f'../workspace/{args.name}/images'
-Path(impath).mkdir(exist_ok=True)  
-outpath = f'../workspace/{args.name}/thermo_output'
-Path(outpath).mkdir(exist_ok=True)  
-from scripts.plot_thermal_relax import main as plot
-plot_args = parser.parse_args()
-plot_args.name = args.name
-plot_args.n = args.mean_width
-plot_args.inp = 'minimization'
-plot(plot_args)
+    if db > 0:
+        print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
 
 print('All done')

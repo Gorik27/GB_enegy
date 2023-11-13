@@ -8,7 +8,8 @@ boundary p p p
 variable name index STGB_210 #should be selected by user
 variable structure_name index sname
 
-variable self index minimize
+variable id index None
+variable self index seg_minimize
 variable path0 index workspace
 variable pot_path index potentials
 variable home index scripts
@@ -43,14 +44,21 @@ shell mkdir ../${path}/${dump}
 shell mkdir ../${dump_path}
 
 # ATOMS DEFINITION
-read_data ../${structure}
+read_data ../${structure} extra/atom/types 1
+
+######################################
+# SEGREGATE
+set atom ${id} type 2
 
 ######################################
 # DEFINE INTERATOMIC POTENTIAL
 
 shell cd ../${pot_path}
-include ${potname_single}
+include ${potname_alloy}
 shell cd ../${home}
+
+
+
 
 ######################################
 # DEFINE THERMO AND OUTPUT
@@ -61,8 +69,8 @@ shell mkdir ../${path}/${thermo_output}
 variable file index ../${path}/${thermo_output}/${self}.txt
 print "#time; temp; press; pe" append ${file} screen no
 fix out all print 10 "$(time); $(press); $(pe)" append ${file} screen no
-dump 1 all cfg 100 ../${dump_path}/dump_*.cfg mass type xs ys zs
-dump_modify 1 element ${element1} 
+dump 1 all cfg 100 ../${dump_path}/dump_*.cfg mass type xs ys zs id
+dump_modify 1 element ${element1} ${element2} 
 print "dumpfile ../${dump_path}/dump_0.cfg"
 
 # ---------- Run Minimization --------------------- 

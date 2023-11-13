@@ -3,6 +3,7 @@ import argparse, os, sys, shutil
 from subprocess import Popen, PIPE
 import time, re, shutil, sys, glob
 import numpy as np
+
 sys.path.insert(1, f'{sys.path[0]}/scripts')
 from set_lammps import lmp
 
@@ -10,6 +11,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--offset", required=False, type=int, default=0)
+parser.add_argument("--id", required=False, type=int, default=-1)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
@@ -19,28 +21,33 @@ parser.add_argument("--np", required=False, default=1)
 args = parser.parse_args()
 
 os.chdir('scripts')
-if not args.plot:
-    structure = args.structure
-    if not structure:
-        fname = f'../workspace/{args.name}/conf.txt'
-        flag=False
-        with open(fname, 'r') as f :
-            for line in f:
-                if 'berendsen' in line:
-                    structure = line.split()[-1]
-                    print(structure)
-                    flag = True
-        if not flag:
-            raise ValueError(f'cannot find structure in conf.txt')
 
-
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.minimize -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
+structure = args.structure
+if not structure:
+    fname = f'../workspace/{args.name}/conf.txt'
+    flag=False
+    with open(fname, 'r') as f :
+        for line in f:
+            if 'minimized' in line:
+                structure = line.split()[-1]
+                print(structure)
+                flag = True
+    if not flag:
+        raise ValueError(f'cannot find structure in conf.txt')
+    
+id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
+outname = f'../workspace/{args.name}/dump/CNA/GBEs.txt'
+selected = np.loadtxt(id_file).astype(np.int)
+ids = selected[:,0]
+out = np.zeros((ids.shape[0], 2))
+for i, id in enumerate(ids):
+    print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
+    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {id} -sf omp -pk omp {args.jobs}'
     exitflag = False
     db_flag = False
     db = 0
 
-    print('starting LAMMPS...')
-    print(task)
+    #print(task)
     with Popen(task.split(), stdout=PIPE, bufsize=1, universal_newlines=True) as p:
         time.sleep(0.1)
         print('\n')
@@ -53,6 +60,9 @@ if not args.plot:
                 dumpfile = (line.replace('dumpfile ', '')).replace('\n', '')
             elif "datfile" in line:
                 datfile = (line.replace('datfile ', '')).replace('\n', '')
+            elif "Seg energy" in line:
+                print((line.replace('Seg energy ', '')).replace('\n', ''))
+                E = float((line.replace('Seg energy ', '')).replace('\n', ''))
             elif "All done" in line:
                 exitflag = True
             if not args.verbose:
@@ -65,33 +75,11 @@ if not args.plot:
         raise ValueError('Error in LAMMPS')
 
     print('done\n')
-    print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
+    if db > 0:
+        print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
 
-    output=''
-    flag = False
-    with open(f'../workspace/{args.name}/conf.txt', 'r') as f :
-        for line in f:
-            if 'minimized' in line:
-                line = f'minimized {datfile}\n'
-                flag=True
-                print(line)
-                output += line
-        if not flag:
-            output += f'minimized {datfile}\n'
-
-        with open(f'../workspace/{args.name}/conf.txt', 'w') as f:
-            f.write(output)
-
-print('plotting...')
-impath = f'../workspace/{args.name}/images'
-Path(impath).mkdir(exist_ok=True)  
-outpath = f'../workspace/{args.name}/thermo_output'
-Path(outpath).mkdir(exist_ok=True)  
-from scripts.plot_thermal_relax import main as plot
-plot_args = parser.parse_args()
-plot_args.name = args.name
-plot_args.n = args.mean_width
-plot_args.inp = 'minimization'
-plot(plot_args)
-
+    print(f'E {E}')
+    out[i, 0] = id
+    out[i, 1] = E
+    np.savetxt(outname, out, header='id E')
 print('All done')
