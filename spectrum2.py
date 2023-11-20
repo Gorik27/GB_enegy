@@ -37,7 +37,7 @@ if not structure:
     
 id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
 outname = f'../workspace/{args.name}/dump/CNA/GBEs.txt'
-selected = np.loadtxt(id_file).astype(np.int)
+selected = np.loadtxt(id_file).astype(int)
 ids = selected[:,0]
 out = np.zeros((ids.shape[0], 2))
 for i, id in enumerate(ids):

@@ -9,12 +9,7 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
-parser.add_argument("--np", required=False, default=1)
-parser.add_argument("-l", "--langevin", default=False, action='store_true', required=False, 
-                    help='use langevin thermostat instead of Noose-Hover')
-parser.add_argument("--heat", default=False, action='store_true', required=False, 
-                    help='heat from T0 to T')
-parser.add_argument("--T0", required=False, default=None, type=float, help='use with flag --heat')                   
+parser.add_argument("--np", required=False, default=1)          
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("--save", default=False, action='store_true', required=False,
@@ -23,7 +18,6 @@ parser.add_argument("--postfix", required=False, default='', help="add this post
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
 parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
-parser.add_argument("--min-grain", dest='min_grain', required=False, default=1000, type=int)
 parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
 parser.add_argument("--thermo", required=False, default='berendsen_relax')
 args = parser.parse_args()
@@ -36,19 +30,14 @@ if not args.plot:
         flag=False
         with open(fname, 'r') as f :
             for line in f:
-                if 'berendsen' in line:
+                if 'annealed' in line:
                     structure = line.split()[-1]
                     print(structure)
                     flag = True
         if not flag:
             raise ValueError(f'cannot find structure in conf.txt')
 
-    if args.langevin:
-        script = 'in.berendsen_relax_langevin'
-    elif args.heat:
-        script = f'in.berendsen_relax_heat -var T0 {args.T0}'
-    else:
-        script = 'in.berendsen_relax'
+    script = 'in.berendsen_relax_cooling'
 
     if args.jobs == 1:
         suffix = ''
@@ -100,13 +89,13 @@ if not args.plot:
     flag = False
     with open(f'../workspace/{args.name}/conf.txt', 'r') as f :
         for line in f:
-            if 'annealed' in line:
-                line = f'annealed {datfile}\n'
+            if 'cooled' in line:
+                line = f'cooled {datfile}\n'
                 flag=True
                 print(line)
                 output += line
         if not flag:
-            output += f'annealed {datfile}\n'
+            output += f'cooled {datfile}\n'
 
         with open(f'../workspace/{args.name}/conf.txt', 'w') as f:
             f.write(output)
@@ -120,7 +109,7 @@ from plot_thermal_relax import main as plot
 plot_args = parser.parse_args()
 plot_args.name = args.name
 plot_args.n = args.mean_width
-args.postfix = 'annealing'
+args.postfix = 'cooling'
 if args.thermo:
     thermo = args.thermo
 plot_args.inp = thermo.replace('.txt', '')

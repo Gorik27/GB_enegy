@@ -4,17 +4,18 @@ from subprocess import Popen, PIPE
 import time, re, shutil, sys, glob
 import numpy as np
 sys.path.insert(1, f'{sys.path[0]}/scripts')
-from set_lammps import lmp
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
+parser.add_argument("--np", required=False, default=1)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
+parser.add_argument("--ajobs", type=int, required=False, default=1)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 args = parser.parse_args()
 
 outname = 'polycrystall'
 os.chdir('scripts')
-task = f'{lmp} -in in.find_minimum -var name {args.name} -sf omp -pk omp {args.jobs}'
+task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.find_minimum -var name {args.name} -sf omp -pk omp {args.jobs}'
 exitflag = False
 
 print('finding structure...')
@@ -86,7 +87,7 @@ with open(fname, 'w') as f:
 
 exitflag = False
 
-task = f'atomsk --polycrystal ../dat/{element1}.dat {fname} {outname}.lmp -wrap -overwrite -nthreads {args.jobs}'
+task = f'atomsk --polycrystal ../dat/{element1}.dat {fname} {outname}.lmp -wrap -overwrite -nthreads {args.ajobs}'
 print(task)
 with Popen(task.split(), stdout=PIPE, stdin=PIPE, bufsize=1, universal_newlines=True) as p:
     for line in p.stdout:
@@ -104,7 +105,7 @@ shutil.move(f'{outname}.lmp', f'../dat/{outname}.dat')
 print('done\n')
 
 os.chdir('../../../scripts')
-task = f'{lmp} -in in.minimize -var name {args.name} -var structure_name {outname}.dat -sf omp -pk omp {args.jobs}'
+task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.minimize -var name {args.name} -var structure_name {outname}.dat -sf omp -pk omp {args.jobs}'
 exitflag = False
 
 print('relaxing structure...')

@@ -101,6 +101,7 @@ plot_args = parser.parse_args()
 plot_args.name = args.name
 plot_args.n = args.mean_width
 plot_args.inp = args.thermo
+args.postfix = 'heating'
 plot(plot_args)
 
 print('All done')

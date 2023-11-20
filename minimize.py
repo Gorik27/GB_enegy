@@ -26,7 +26,7 @@ if not args.plot:
         flag=False
         with open(fname, 'r') as f :
             for line in f:
-                if 'berendsen' in line:
+                if 'cooled' in line:
                     structure = line.split()[-1]
                     print(structure)
                     flag = True
@@ -71,13 +71,13 @@ if not args.plot:
     flag = False
     with open(f'../workspace/{args.name}/conf.txt', 'r') as f :
         for line in f:
-            if 'minimized' in line:
-                line = f'minimized {datfile}\n'
+            if 'ann_minimized' in line:
+                line = f'ann_minimized {datfile}\n'
                 flag=True
                 print(line)
                 output += line
         if not flag:
-            output += f'minimized {datfile}\n'
+            output += f'ann_minimized {datfile}\n'
 
         with open(f'../workspace/{args.name}/conf.txt', 'w') as f:
             f.write(output)
@@ -87,11 +87,6 @@ impath = f'../workspace/{args.name}/images'
 Path(impath).mkdir(exist_ok=True)  
 outpath = f'../workspace/{args.name}/thermo_output'
 Path(outpath).mkdir(exist_ok=True)  
-from scripts.plot_thermal_relax import main as plot
-plot_args = parser.parse_args()
-plot_args.name = args.name
-plot_args.n = args.mean_width
-plot_args.inp = 'minimization'
-plot(plot_args)
+
 
 print('All done')

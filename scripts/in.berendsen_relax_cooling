@@ -8,7 +8,7 @@ boundary p p p
 variable name index STGB_210 #should be selected by user
 variable structure_name index sname
 
-variable self index berendsen_init
+variable self index berendsen_cooling
 variable path0 index workspace
 variable pot_path index potentials
 variable home index scripts
@@ -70,14 +70,13 @@ dump_modify 1 element ${element1}
 print "dumpfile ../${dump_path}/dump_0.cfg"
 ######################################
 # START
-velocity all create $(2*v_T_init) ${rnd_seed_BR} mom no rot no
 fix barostat all press/berendsen iso 0.0 0.0 $(1000.0*dt) modulus 1000000
-fix NVT all nvt temp ${T_init} ${T} $(100.0*dt)
-run ${berendsen_relax_steps_init}
+fix NVT all nvt temp ${T} 1 $(100.0*dt)
+run ${berendsen_relax_steps_cooling}
 
 shell cd ../${path}/${dat}
-write_data init_${self}_T${T}_steps${berendsen_relax_steps_init}.dat
-print "datfile init_${self}_T${T}_steps${berendsen_relax_steps_init}.dat"
+write_data cooled_T${T}_steps${berendsen_relax_steps_cooling}.dat
+print "datfile cooled_T${T}_steps${berendsen_relax_steps_cooling}.dat"
 shell cd ../../../${home} 
 
 shell rm log.lammps

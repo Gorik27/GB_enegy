@@ -10,9 +10,12 @@ module purge
 module load intel
 module load openmpi3
 
-#python -u create.py -n $name -j 3 > ${name}_create.out
 #python -u berendsen_init_mpi.py -n ${name} -j 3 --np 27 > ${name}_init_berendsen.out
-python -u berendsen_mpi.py -n ${name} -j 3 --np 27 > ${name}_berendsen.out
-python -u segregation_range_mpi.py -n $name -s berendsen_relax_T300_steps5000000.dat --mu 1.23 -c1 0 -c2 5 -N 12 -k 100 --loops 30 --samples 1 --np 27 -j 3 > ${name}_seg.out
+#python -u berendsen_mpi.py -n ${name} -j 3 --np 27 > ${name}_berendsen_relax.out
+#python -u cooling_mpi.py -n ${name} -j 3 --np 27 > ${name}_cooling.out
+#python -u minimize.py -n ${name} -j 3 --np 27 > ${name}_minimizing.out
+#python -u spectrum.py -n ${name} -j 3 --np 27 > ${name}_spectrum.out
+#python -u spectrum_read.py -n ${name} -j 3 --np 27 > ${name}_spectrum_read.out
+python -u spectrum2.py -n ${name} -j 3 --np 27 > ${name}_spectrum2.out
 EOF
 sbatch task_$name

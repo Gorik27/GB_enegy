@@ -27,7 +27,7 @@ if not args.plot:
         flag=False
         with open(fname, 'r') as f :
             for line in f:
-                if 'berendsen' in line:
+                if 'ann_minimized' in line:
                     structure = line.split()[-1]
                     print(structure)
                     flag = True
