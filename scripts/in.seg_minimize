@@ -75,9 +75,9 @@ print "dumpfile ../${dump_path}/dump_0.cfg"
 
 # ---------- Run Minimization --------------------- 
 minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
-fix 1 all box/relax iso 0.0 vmax 0.01
+#fix 1 all box/relax iso 0.0 vmax 0.01
 
-minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
+#minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
 shell cd ../${path}/${dat}
 write_data ${self}.dat
 print "datfile ${self}.dat"
