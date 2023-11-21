@@ -10,13 +10,10 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
-parser.add_argument("--offset", required=False, type=int, default=0)
-parser.add_argument("--id", required=False, type=int, default=-1)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
-parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
-parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
-parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
+parser.add_argument("-f", "--force", default=False, action='store_true', required=False,
+                     help='force to restart calculations')
 parser.add_argument("--np", required=False, default=1)
 args = parser.parse_args()
 
@@ -37,10 +34,22 @@ if not structure:
     
 id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
 outname = f'../workspace/{args.name}/dump/CNA/GBEs.txt'
+
 selected = np.loadtxt(id_file).astype(int)
 ids = selected[:,0]
-out = np.zeros((ids.shape[0], 2))
-for i, id in enumerate(ids):
+i0 = 0
+
+if (not args.force) and os.path.isfile(outname):
+    out = np.loadtxt(outname)
+    calculated_ids = out[:, 0]
+    i0 = np.where(calculated_ids==0)[0][0]
+    print(f'found previous calculations, continue from #{i0}/{len(out)} point')
+else:
+    print(f'starting new calculation')
+    out = np.zeros((ids.shape[0], 2))
+
+for i in range(i0, len(ids)):
+    id = ids[i]
     print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
     task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {id} -sf omp -pk omp {args.jobs}'
     exitflag = False
