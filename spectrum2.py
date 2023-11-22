@@ -25,7 +25,7 @@ if not structure:
     flag=False
     with open(fname, 'r') as f :
         for line in f:
-            if 'minimized' in line:
+            if 'ann_minimized' in line:
                 structure = line.split()[-1]
                 print(structure)
                 flag = True

@@ -10,13 +10,11 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
-parser.add_argument("--offset", required=False, type=int, default=0)
+parser.add_argument("-f", "--force", default=False, action='store_true', required=False,
+                     help='force to restart calculations')
 parser.add_argument("--id", required=False, type=int, default=-1)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
-parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
-parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
-parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
 parser.add_argument("--np", required=False, default=1)
 args = parser.parse_args()
 
@@ -28,7 +26,7 @@ if not structure:
     flag=False
     with open(fname, 'r') as f :
         for line in f:
-            if 'minimized' in line:
+            if 'ann_minimized' in line:
                 structure = line.split()[-1]
                 print(structure)
                 flag = True
@@ -51,22 +49,37 @@ with open(id_file, 'r') as f:
                 zs.append(int(df[1]))
                 t = df[2:]
                 t.remove('')
-                #print(t)
                 neighbors.append(np.array(t).astype(int))
-                #print(neighbors[-1])
             else:
                 i += 1
 
-out = np.zeros((len(ids_central), np.max(zs)))
-for i, id1 in enumerate(ids_central):
+if (not args.force) and os.path.isfile(outname):
+    out = np.loadtxt(outname)
+    calculated_ids_c = out[:, 0]
+    i0 = np.where(calculated_ids_c==0)[0][0]
+    j0 = np.where(out[i0-1, 1:] == 0)[0][0]
+    if j0 == zs[i0-1]:  # all neighbors of central atom (i0-1) was calculated 
+        j0 = 0          # so we continue from i0, j0=0
+    else:           # some neighbors of central atom (i0-1) was not calculated 
+        i0 -= 1     # so we continue from (i0-1) j0
+    print(f'found previous calculations, continue from #{i0}/{len(out)} central atom, #{j0}/{zs[i0]} neighbor')
+else:
+    print(f'starting new calculation')
+    out = np.zeros((len(ids_central), np.max(zs)))
+
+
+for i in range(i0, len(ids_central)):
+    id1 = ids_central[i]
     print(f'#{i+1}/{len(ids_central)} id_central {id1}')
-    for j, id2 in enumerate(neighbors[i]):
+    out[i, 0] = id1
+    for j in range(j0, len(neighbors[i])):
+        id2 = neighbors[i][j]
         print(f'    #{j+1}/{len(neighbors[i])} id {id2}')
         task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} -sf omp -pk omp {args.jobs}'
         exitflag = False
         db_flag = False
         db = 0
-        out[i, 0] = id1
+        
         #print(task)
         with Popen(task.split(), stdout=PIPE, bufsize=1, universal_newlines=True) as p:
             time.sleep(0.1)
