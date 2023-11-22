@@ -39,7 +39,7 @@ if not structure:
 outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
 
 
-task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {args.id} -sf omp -pk omp {args.jobs}'
+task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var self bulk_seg -var id {args.id} -sf omp -pk omp {args.jobs}'
 exitflag = False
 db_flag = False
 db = 0
@@ -62,6 +62,10 @@ with Popen(task.split(), stdout=PIPE, bufsize=1, universal_newlines=True) as p:
             E = float((line.replace('Seg energy ', '')).replace('\n', ''))
         elif "All done" in line:
             exitflag = True
+        elif "settings made for type" in line:
+            ns = int(line.split()[0])
+            if ns != 1:
+                raise ValueError(f'There is no atoms with id {args.id}')
         if not args.verbose:
             if '!' in line:
                 print(line.replace('!', ''), end='')
