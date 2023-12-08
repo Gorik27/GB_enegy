@@ -64,8 +64,10 @@ if (not args.force) and os.path.isfile(outname):
         i0 -= 1     # so we continue from (i0-1) j0
     print(f'found previous calculations, continue from #{i0}/{len(out)} central atom, #{j0}/{zs[i0]} neighbor')
 else:
+    i0 = 0
+    j0 = 0
     print(f'starting new calculation')
-    out = np.zeros((len(ids_central), np.max(zs)))
+    out = np.zeros((len(ids_central), 1+np.max(zs)))
 
 
 for i in range(i0, len(ids_central)):
