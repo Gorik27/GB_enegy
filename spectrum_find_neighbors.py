@@ -58,10 +58,12 @@ for i in range(len(neighbors)):
         for j in range(len(list_pre)):
             #filter only GB atoms through neighbors and neglecting too small facets of Voronoi polyhedra
             if (ids[list_pre[j]] in gb_ids) and (weights[j]/norm > w_treshold): 
+                list_post.append(ids[list_pre[j]])
+                weights_post.append(weights[j])
                 # skip already icluded pairs
-                if not ids[list_pre[j]] in ids[:i]: # check if not neighbor already was an central atom
-                    list_post.append(ids[list_pre[j]])
-                    weights_post.append(weights[j])
+                #if not ids[list_pre[j]] in ids[:i]: # check if not neighbor already was an central atom
+                #    list_post.append(ids[list_pre[j]])
+                #    weights_post.append(weights[j])
         out += f'{ids[i]} {len(list_post)} '
         out_weights += f'{ids[i]} {len(list_post)} '
         ncount += len(list_post)

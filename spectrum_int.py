@@ -16,7 +16,13 @@ parser.add_argument("--id", required=False, type=int, default=-1)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("--np", required=False, default=1)
+parser.add_argument("--part", required=False, type=str, default='0_1',
+                     help='to divide workflow on parts type: n_m (n<m) where m number of parts and n is a number of selected part (from 0 to m-1)')
 args = parser.parse_args()
+
+idpart, nparts = map(int, args.part.split('_'))
+assert idpart<nparts
+assert idpart>=0
 
 os.chdir('scripts')
 
@@ -34,7 +40,10 @@ if not structure:
         raise ValueError(f'cannot find structure in conf.txt')
     
 id_file = f'../workspace/{args.name}/dump/CNA/neigbors.txt'
-outname = f'../workspace/{args.name}/dump/CNA/GBEs_int.txt'
+if args.part == '0_1':
+    outname = f'../workspace/{args.name}/dump/CNA/GBEs_int.txt'
+else:
+    outname = f'../workspace/{args.name}/dump/CNA/GBEs_int_{args.part}.txt'
 ids_central = []
 neighbors = []
 zs = []
@@ -52,6 +61,27 @@ with open(id_file, 'r') as f:
                 neighbors.append(np.array(t).astype(int))
             else:
                 i += 1
+
+Z = np.sum(zs)
+
+volume = np.ceil(Z/nparts)
+a = volume*idpart
+if idpart == nparts-1:
+    b = Z
+else:
+    b = a + volume
+zsums = np.cumsum(zs)
+ia = np.where(zsums>a)[0][0]
+ib = np.where(zsums<=b)[0][-1]
+ids_central = ids_central[ia:ib+1]
+zs = zs[ia:ib+1]
+neighbors = neighbors[ia:ib+1]
+print(ia, ib)
+'''# tweak for restoring of work fone without dividing in parts
+out = np.loadtxt(f'../workspace/{args.name}/dump/CNA/GBEs_int.txt')
+np.savetxt(outname, out[ia:ib+1], header='id [Es]')
+exit()
+'''
 
 if (not args.force) and os.path.isfile(outname):
     out = np.loadtxt(outname)
