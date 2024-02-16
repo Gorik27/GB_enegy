@@ -3,6 +3,7 @@ import argparse, os, sys, shutil
 from subprocess import Popen, PIPE
 import time, re, shutil, sys, glob
 import numpy as np
+from datetime import datetime
 
 sys.path.insert(1, f'{sys.path[0]}/scripts')
 from set_lammps import lmp
@@ -14,6 +15,7 @@ parser.add_argument("-f", "--force", default=False, action='store_true', require
                      help='force to restart calculations')
 parser.add_argument("--id", required=False, type=int, default=-1)
 parser.add_argument("-s", "--structure", required=False)
+parser.add_argument("-o", "--old_suffix", required=False, default='')
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("--np", required=False, default=1)
 parser.add_argument("--part", required=False, type=str, default='0_1',
@@ -40,6 +42,9 @@ if not structure:
         raise ValueError(f'cannot find structure in conf.txt')
     
 id_file = f'../workspace/{args.name}/dump/CNA/neigbors.txt'
+if args.old_suffix:
+    id_file_old = f'../workspace/{args.name}/dump/CNA/neigbors{args.old_suffix}.txt'
+    outname_old = f'../workspace/{args.name}/dump/CNA/GBEs_int{args.old_suffix}.txt'
 if args.part == '0_1':
     outname = f'../workspace/{args.name}/dump/CNA/GBEs_int.txt'
 else:
@@ -61,8 +66,31 @@ with open(id_file, 'r') as f:
                 neighbors.append(np.array(t).astype(int))
             else:
                 i += 1
-
 Z = np.sum(zs)
+print(f'Total number of neighbors: {Z}')
+
+
+neighbors_old = []
+zs_old = []
+if args.old_suffix:
+    out_old = np.loadtxt(outname_old)
+    with open(id_file_old, 'r') as f:
+        i = 0
+        for line in f:
+            if '#' not in line:
+                line = line.replace('\n', '')
+                if i>0:
+                    df = line.split(' ')
+                    assert ids_central[i-1] == int(df[0])
+                    zs_old.append(int(df[1]))
+                    t = df[2:]
+                    t.remove('')
+                    neighbors_old.append(np.array(t).astype(int))
+                    i += 1
+                else:
+                    i += 1
+    Z_old = np.sum(zs_old)
+    print(f'Total number of neighbors already calculated: {Z_old}')
 
 volume = np.ceil(Z/nparts)
 a = volume*idpart
@@ -76,8 +104,13 @@ ib = np.where(zsums<=b)[0][-1]
 ids_central = ids_central[ia:ib+1]
 zs = zs[ia:ib+1]
 neighbors = neighbors[ia:ib+1]
-print(ia, ib)
-'''# tweak for restoring of work fone without dividing in parts
+
+if args.old_suffix:
+    zs_old = zs_old[ia:ib+1]
+    neighbors_old = neighbors_old[ia:ib+1]  
+    out_old = out_old[ia:ib+1]  
+print('Selected part: ', ia, ib)
+'''# tweak for restoring of work done without dividing in parts
 out = np.loadtxt(f'../workspace/{args.name}/dump/CNA/GBEs_int.txt')
 np.savetxt(outname, out[ia:ib+1], header='id [Es]')
 exit()
@@ -99,7 +132,8 @@ else:
     print(f'starting new calculation')
     out = np.zeros((len(ids_central), 1+np.max(zs)))
 
-
+now = datetime.now()
+print('Starting time: ', now.strftime("%H:%M:%S"))
 for i in range(i0, len(ids_central)):
     id1 = ids_central[i]
     print(f'#{i+1}/{len(ids_central)} id_central {id1}')
@@ -107,6 +141,11 @@ for i in range(i0, len(ids_central)):
     for j in range(j0, len(neighbors[i])):
         id2 = neighbors[i][j]
         print(f'    #{j+1}/{len(neighbors[i])} id {id2}')
+        if id2 in neighbors_old[i]:
+            j_old = np.where(neighbors_old[i]==id2)[0][0]+1
+            print(f'    already calculated {id1}-{id2} j_old {j_old} E {out_old[i][j_old]}')
+            out[i][j] = out_old[i][j_old]
+            continue
         task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} -sf omp -pk omp {args.jobs}'
         exitflag = False
         db_flag = False
@@ -126,7 +165,7 @@ for i in range(i0, len(ids_central)):
                 elif "datfile" in line:
                     datfile = (line.replace('datfile ', '')).replace('\n', '')
                 elif "Seg energy" in line:
-                    print((line.replace('Seg energy ', '')).replace('\n', ''))
+                    #print((line.replace('Seg energy ', '')).replace('\n', ''))
                     E = float((line.replace('Seg energy ', '')).replace('\n', ''))
                 elif "All done" in line:
                     exitflag = True
@@ -139,11 +178,11 @@ for i in range(i0, len(ids_central)):
         if not exitflag:
             raise ValueError('Error in LAMMPS')
 
-        print('done\n')
+        print('    done\n')
         if db > 0:
             print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
 
-        print(f'E {E}')
+        print(f'    E {E}')
         
         out[i, j+1] = E
     np.savetxt(outname, out, header='id [Es]')
