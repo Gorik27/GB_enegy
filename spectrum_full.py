@@ -54,6 +54,9 @@ if args.jobs == 1:
 else:
     suffix = f' -sf omp -pk omp {args.jobs} '
 
+from datetime import datetime
+now = datetime.now()
+print('Starting time: ', now.strftime("%H:%M:%S"))
 for i in range(i0, len(ids)):
     ids_i = ids[i]
     ids_i = ids_i[ids_i!=-1]

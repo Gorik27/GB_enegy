@@ -54,6 +54,9 @@ if args.jobs == 1:
 else:
     suffix = f' -sf omp -pk omp {args.jobs} '
 
+from datetime import datetime
+now = datetime.now()
+print('Starting time: ', now.strftime("%H:%M:%S"))
 for i in range(i0, len(ids)):
     id = ids[i]
     print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
