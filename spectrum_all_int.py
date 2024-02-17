@@ -49,10 +49,10 @@ else:
     print(f'starting new calculation')
     out = np.zeros((ids.shape[0], 2))
 
-if args.job == 1:
+if args.jobs == 1:
     suffix = ''
 else:
-    suffix = f' -sf omp -pk omp {args.job} '
+    suffix = f' -sf omp -pk omp {args.jobs} '
 
 for i in range(i0, len(ids)):
     id = ids[i]

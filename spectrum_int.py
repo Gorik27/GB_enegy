@@ -132,10 +132,10 @@ else:
     print(f'starting new calculation')
     out = np.zeros((len(ids_central), 1+np.max(zs)))
 
-if args.job == 1:
+if args.jobs == 1:
     suffix = ''
 else:
-    suffix = f' -sf omp -pk omp {args.job} '
+    suffix = f' -sf omp -pk omp {args.jobs} '
 
 now = datetime.now()
 print('Starting time: ', now.strftime("%H:%M:%S"))
