@@ -144,7 +144,7 @@ for i in range(i0, len(ids_central)):
         if id2 in neighbors_old[i]:
             j_old = np.where(neighbors_old[i]==id2)[0][0]+1
             print(f'    already calculated {id1}-{id2} j_old {j_old} E {out_old[i][j_old]}')
-            out[i][j] = out_old[i][j_old]
+            out[i][j+1] = out_old[i][j_old]
             continue
         task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} -sf omp -pk omp {args.jobs}'
         exitflag = False
