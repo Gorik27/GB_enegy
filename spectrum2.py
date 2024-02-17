@@ -48,10 +48,15 @@ else:
     print(f'starting new calculation')
     out = np.zeros((ids.shape[0], 2))
 
+if args.job == 1:
+    suffix = ''
+else:
+    suffix = f' -sf omp -pk omp {args.job} '
+
 for i in range(i0, len(ids)):
     id = ids[i]
     print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {id} -sf omp -pk omp {args.jobs}'
+    task = f'mpirun -np {args.np} {lmp} -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {id} {suffix}'
     exitflag = False
     db_flag = False
     db = 0

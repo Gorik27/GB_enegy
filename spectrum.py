@@ -9,7 +9,6 @@ from set_lammps import lmp
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
-parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
@@ -36,7 +35,7 @@ if not args.plot:
 
     res_name = 'CNA'
 
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.CNA -var name {args.name} -var structure_name {structure} -var self {res_name} -sf omp -pk omp {args.jobs}'
+    task = f'mpirun -np {args.np} {lmp} -in in.CNA -var name {args.name} -var structure_name {structure} -var self {res_name}'
     exitflag = False
     db_flag = False
     db = 0

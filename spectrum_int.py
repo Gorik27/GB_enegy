@@ -132,6 +132,11 @@ else:
     print(f'starting new calculation')
     out = np.zeros((len(ids_central), 1+np.max(zs)))
 
+if args.job == 1:
+    suffix = ''
+else:
+    suffix = f' -sf omp -pk omp {args.job} '
+
 now = datetime.now()
 print('Starting time: ', now.strftime("%H:%M:%S"))
 for i in range(i0, len(ids_central)):
@@ -146,7 +151,7 @@ for i in range(i0, len(ids_central)):
             print(f'    already calculated {id1}-{id2} j_old {j_old} E {out_old[i][j_old]}')
             out[i][j+1] = out_old[i][j_old]
             continue
-        task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} -sf omp -pk omp {args.jobs}'
+        task = f'mpirun -np {args.np} {lmp} -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} {suffix}'
         exitflag = False
         db_flag = False
         db = 0
