@@ -10,14 +10,15 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
-parser.add_argument("-i", "--id", type=int, required=True)
+parser.add_argument("-i", "--id", nargs='+', required=True)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-f", "--force", default=False, action='store_true', required=False,
                      help='force to restart calculations')
+parser.add_argument("-b", "--boxrelax", default=False, action='store_true', required=False,
+                     help='fix box/relax turn on')
 parser.add_argument("--np", required=False, default=1)
 args = parser.parse_args()
-
 os.chdir('scripts')
 
 structure = args.structure
@@ -32,9 +33,17 @@ if not structure:
                 flag = True
     if not flag:
         raise ValueError(f'cannot find structure in conf.txt')
-    
+
+if args.boxrelax:
+    boxrelax_arg = '_boxrelax'
+else:
+    boxrelax_arg = ''
+
+ids_i_arg = (' '.join(str(id) for id in args.id))
+ids_i_name = ('_'.join(str(id) for id in args.id))
+
 id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
-outname = f'../workspace/{args.name}/dump/CNA/GBEs_id_{args.id}.txt'
+outname = f'../workspace/{args.name}/dump/CNA/GBEs_id_{ids_i_name}{boxrelax_arg}.txt'
 
 selected = np.loadtxt(id_file).astype(int)
 ids = selected[:,0]
@@ -57,10 +66,11 @@ else:
 from datetime import datetime
 now = datetime.now()
 print('Starting time: ', now.strftime("%H:%M:%S"))
+
 for i in range(i0, len(ids)):
     id = ids[i]
     print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
-    task = f'mpirun -np {args.np} {lmp} -in in.seg_minimize_id -var name {args.name} -var structure_name {structure} -var id0 {args.id} -var id {id}  {suffix}'
+    task = f'mpirun -np {args.np} {lmp} -in in.seg_minimize_id{boxrelax_arg} -var name {args.name} -var structure_name {structure} -var id0 {ids_i_arg} -var id {id}  {suffix}'
     exitflag = False
     db_flag = False
     db = 0

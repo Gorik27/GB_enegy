@@ -10,7 +10,7 @@ variable structure_name index sname
 
 variable id index None
 variable id0 index None
-variable self index seg_minimize_id
+variable self index seg_minimize_id_boxrelax
 variable path0 index workspace
 variable pot_path index potentials
 variable home index scripts
@@ -72,7 +72,7 @@ shell cd ../${home}
 ######################################
 # DEFINE THERMO AND OUTPUT
 
-thermo_style custom time press pe
+thermo_style custom time press pe lx ly lz
 thermo 10
 shell mkdir ../${path}/${thermo_output}
 variable file index ../${path}/${thermo_output}/${self}.txt
@@ -84,9 +84,11 @@ print "dumpfile ../${dump_path}/dump_0.cfg"
 
 # ---------- Run Minimization --------------------- 
 minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
-#fix 1 all box/relax iso 0.0 vmax 0.01
 
-#minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
+fix 1 all box/relax iso 0.0 vmax 0.01
+minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
+unfix 1 
+
 shell cd ../${path}/${dat}
 write_data ${self}.dat
 print "datfile ${self}.dat"
