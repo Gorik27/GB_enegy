@@ -146,11 +146,12 @@ for i in range(i0, len(ids_central)):
     for j in range(j0, len(neighbors[i])):
         id2 = neighbors[i][j]
         print(f'    #{j+1}/{len(neighbors[i])} id {id2}')
-        if id2 in neighbors_old[i]:
-            j_old = np.where(neighbors_old[i]==id2)[0][0]+1
-            print(f'    already calculated {id1}-{id2} j_old {j_old} E {out_old[i][j_old]}')
-            out[i][j+1] = out_old[i][j_old]
-            continue
+        if args.old_suffix:
+            if id2 in neighbors_old[i]:
+                j_old = np.where(neighbors_old[i]==id2)[0][0]+1
+                print(f'    already calculated {id1}-{id2} j_old {j_old} E {out_old[i][j_old]}')
+                out[i][j+1] = out_old[i][j_old]
+                continue
         task = f'mpirun -np {args.np} {lmp} -in in.seg_int_minimize -var name {args.name} -var structure_name {structure} -var id1 {id1} -var id2 {id2} {suffix}'
         exitflag = False
         db_flag = False

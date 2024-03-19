@@ -10,10 +10,12 @@ from set_lammps import lmp
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
-parser.add_argument("--id", required=True, type=int)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
+parser.add_argument("-f", "--force", default=False, action='store_true', required=False,
+                     help='force to restart calculations')
 parser.add_argument("--np", required=False, default=1)
+parser.add_argument("-i", "--id", nargs='+', required=True)
 args = parser.parse_args()
 
 os.chdir('scripts')
@@ -24,27 +26,35 @@ if not structure:
     flag=False
     with open(fname, 'r') as f :
         for line in f:
-            if 'minimized' in line:
+            if 'ann_minimized' in line:
                 structure = line.split()[-1]
                 print(structure)
                 flag = True
     if not flag:
         raise ValueError(f'cannot find structure in conf.txt')
     
+ids_i_arg = (' '.join(str(id) for id in args.id))
+ids_i_name = ('_'.join(str(id) for id in args.id))
+    
+outname = f'../workspace/{args.name}/dump/CNA/Seg_energy_{ids_i_name}.txt'
 
-outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
+
 
 if args.jobs == 1:
     suffix = ''
 else:
     suffix = f' -sf omp -pk omp {args.jobs} '
 
-task = f'mpirun -np {args.np} {lmp} -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var self bulk_seg -var id {args.id} {suffix}'
+from datetime import datetime
+now = datetime.now()
+print('Starting time: ', now.strftime("%H:%M:%S"))
+
+task = f'mpirun -np {args.np} {lmp} -in in.seg_series_minimize -var name {args.name} -var structure_name {structure} -var id {ids_i_arg} {suffix}'
 exitflag = False
 db_flag = False
 db = 0
 
-print(task)
+#print(task)
 with Popen(task.split(), stdout=PIPE, bufsize=1, universal_newlines=True) as p:
     time.sleep(0.1)
     print('\n')
@@ -62,10 +72,6 @@ with Popen(task.split(), stdout=PIPE, bufsize=1, universal_newlines=True) as p:
             E = float((line.replace('Seg energy ', '')).replace('\n', ''))
         elif "All done" in line:
             exitflag = True
-        elif "settings made for type" in line:
-            ns = int(line.split()[0])
-            if ns != 1:
-                raise ValueError(f'There is no atoms with id {args.id}')
         if not args.verbose:
             if '!' in line:
                 print(line.replace('!', ''), end='')
@@ -80,11 +86,6 @@ if db > 0:
     print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
 
 print(f'E {E}')
-append = os.path.isfile(outname)
-if append:
-    with open(outname, "ab") as f:
-        f.write(b"\n")
-        np.savetxt(f, [[args.id, E]])
-else:
-    np.savetxt(outname, [[args.id, E]], header='id E')
+out = [E]
+np.savetxt(outname, out, header='E')
 print('All done')
