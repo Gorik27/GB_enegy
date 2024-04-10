@@ -37,21 +37,27 @@ def main(args):
         for line in f:
             if '##Natoms' in line:
                 Natoms = int(line.split(' ')[-1])
-    df = pd.read_csv(file, sep=';', comment='#', names=['time','temp', 'pe', 'conc', 'mu'])
+    df = pd.read_csv(file, sep=';', comment='#', names=['step', 'time','temp', 'pe', 'conc', 'mu'])
+    step_ = df['step']
     t_ = df['time']
     pe_ = df['pe']/Natoms
     c_ = (1-df['conc'])*100
-    t, pe, c = [t_[0]], [pe_[0]], [c_[0]]
+    T_ = df['temp']
+    step, t, pe, c, T = [step_[0]], [t_[0]], [pe_[0]], [c_[0]], [T_[0]]
     for i in range(1,len(t_)):
         if t_[i]==t_[i-1]:
             pass
         else:
+            step.append(step_[i])
             t.append(t_[i])
             pe.append(pe_[i])
             c.append(c_[i])
+            T.append(T_[i])
+    step = np.array(step)
     t = np.array(t)
     pe = np.array(pe)
     c = np.array(c)
+    T = np.array(T)
     if s1>=len(t)-1:
         print(f'Error: offset {s1} is too big for sequence of lenght {len(t)}!')
         s1 = 0
@@ -63,13 +69,18 @@ def main(args):
 
     pe1 = rolling_mean(pe[s], n)
     c1 = rolling_mean(c[s], n)
-    step1 = np.arange(len(pe1))
+    t1 = rolling_mean(t[s], n)
+    step1 = rolling_mean(step[s], n)#np.arange(len(pe1))
+    T1 = rolling_mean(T[s], n)
 
     f, (ax1, ax3) = plt.subplots(1, 2, figsize=(10,5))
     
     ax2 = ax1.twinx()
-    ax1.plot(step1+s1, c1, color=color_red, zorder=0)
-    ax2.plot(step1+s1, pe1, zorder=5)
+    if args.temp:
+        ax4 = ax1.twinx()
+        ax4.plot(step1, T1, zorder=2, color='black')
+    ax1.plot(step1, c1, color=color_red, zorder=0)
+    ax2.plot(step1, pe1, zorder=5)
     
     def slope(x1, w):
         s = slice(x1,x1+w)
@@ -89,19 +100,22 @@ def main(args):
     ax2.set_ylabel('$<E_{pot}>_{roll}, eV/atom$')
     ax1.set_ylabel('$concentration$', color=color_red)
     ax3.set_xlabel(f'$step\cdot {st}$')
-    ax3.set_ylabel('$\partial_t<E_{pot}>_{roll}, eV/atom/step$')
+    ax3.set_ylabel('$\partial_t<E_{pot}>_{roll}, eV/atom/MC step$')
     ax3.plot(res, 'o')
-    ax1.set_xlim((0, len(t)))
-    ticks = list(ax1.get_xticks()) + [s1, len(pe1)+s1]
-    ax1.set_xticks(ticks)
-    ax1.set_xticklabels(list(map(int, ticks)), rotation='vertical')
+    ax1.set_xlim((step1.min(), step1.max()))
+    #ticks = list(ax1.get_xticks()) + [s1, len(pe1)+s1]
+    #ax1.set_xticks(ticks)
+    #ax1.set_xticklabels(list(map(int, ticks)), rotation='vertical')
     f.suptitle(args.name)
     f.tight_layout()
     ax2.text(0.99, 0.99, f'rolling mean over {n}', horizontalalignment='right', verticalalignment='top', transform=ax1.transAxes, zorder=10)
     ax2.text(0.99, 0.94, f'$\sigma_c = {pretty_round(sigma_c)} \\%$', horizontalalignment='right', verticalalignment='top', transform=ax1.transAxes, zorder=10)
     ax2.text(0.99, 0.89, f'$\sigma_U = {pretty_round(sigma_pe)} eV/atom$', horizontalalignment='right', verticalalignment='top', transform=ax1.transAxes, zorder=10)
     ax3.text(0.5, 0.02, f'dx = {w}', transform=ax3.transAxes)
-    plt.savefig(f"../workspace/{args.name}/images/{(args.src).replace('.txt', '')}_{args.postfix}.png")
+    if args.temp:
+        plt.savefig(f"../workspace/{args.name}/images/{(args.src).replace('.txt', '')}_cooling_{args.postfix}.png")
+    else:
+        plt.savefig(f"../workspace/{args.name}/images/{(args.src).replace('.txt', '')}_{args.postfix}.png")
     if not args.hide:
         plt.show()
     else:
@@ -113,11 +127,12 @@ if __name__ == '__main__':
     parser.add_argument("-n", "--name", required=True)
     parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
     parser.add_argument("-s", "--structure", required=True, dest='src')
-    parser.add_argument("--slope-conv", dest='slope_conv', default=0.001)
+    parser.add_argument("--sc", dest='slope_conv', default=0.001, type=float)
     parser.add_argument("--w", type=int, default=3000, required=False, help='width of linear regression region for calculating slope')
     parser.add_argument("--st", type=int, default=100, required=False, help='step for points in which slope will be calculated')
     parser.add_argument("--num", type=int, default=500, required=False, help="width of rolling mean window")
     parser.add_argument("--s1", type=int, default=10, required=False, help='starting point for avg dat')
     parser.add_argument("--hide", default=False, required=False, action='store_true', help='hide the plot, only save to file')
+    parser.add_argument("--temp", default=False, required=False, action='store_true', help='plot temperature')
     args = parser.parse_args()
     main(args)

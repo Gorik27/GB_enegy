@@ -43,7 +43,7 @@ shell mkdir ../${path}/${dump}
 shell mkdir ../${dump_path}
 
 # ATOMS DEFINITION
-read_data ../${structure}
+read_data ../${structure} nocoeff
 
 ######################################
 # DEFINE INTERATOMIC POTENTIAL

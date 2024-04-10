@@ -1,0 +1,7 @@
+pair_style lj/cut 7
+pair_coeff 1 1 0.3450 2.644 6.7
+pair_coeff 2 2 0.3729 2.2808 5.7
+mass 1 107.8682
+mass 2 58.6934
+neighbor 2.0 bin 
+neigh_modify delay 10 check yes 

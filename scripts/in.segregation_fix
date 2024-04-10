@@ -59,7 +59,7 @@ shell mkdir ../${dump_path}
 timestep ${dt}
 
 # ATOMS DEFINITION
-read_data ../${structure} add append
+read_data ../${structure} add append nocoeff
 ######################################
 # DEFINE INTERATOMIC POTENTIAL
 

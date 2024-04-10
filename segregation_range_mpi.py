@@ -20,7 +20,7 @@ def main(args):
     N_loops = args.loops
     kappa = args.kappa
     if args.kappa == -1:
-        with open(f'workspace/{args.name}/input.txt', 'r') as f:
+        with open(f'workspace/{name}/input.txt', 'r') as f:
             for line in f:
                 if 'variable kappa equal' in line:
                     kappa = float(line.split(' ')[-1])
@@ -67,6 +67,14 @@ def main(args):
     conc_range = np.linspace(args.conc1, args.conc2, num=args.conc_num)
     step_ind = 0
 
+    id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
+    gb_list = np.loadtxt(id_file).astype(int)[:,0]
+    gb_list_arg = (''.join(f'{id} 1\n' for id in gb_list))
+    gb_list_arg = f'{len(gb_list)}\n{gb_list_arg}'
+    gb_list_file = f'../workspace/{args.name}/dump/CNA/GB_group.txt'
+    with open(gb_list_file, 'w') as f:
+        f.write(gb_list_arg)
+
     output_file = f"../workspace/{args.name}/segregation_range_c_{args.conc1}_{args.conc2}_n_{args.conc_num}_{args.postfix}.txt"
     if not os.path.isfile(output_file):
         with open(output_file, 'a') as f:
@@ -85,7 +93,7 @@ def main(args):
                 args.restart = True
 
     if args.restart:
-        routine = 'in.segregation_r'
+        routine = 'in.segregation_gb_r'
         struct_flag = ''
         if mu_arg == '':
             thermo = f"../workspace/{args.name}/thermo_output/segregation_{conc_range[step_ind]}_k_{kappa}.txt"
@@ -97,7 +105,7 @@ def main(args):
                         last_mu = float(lines[-1].split('; ')[-1])
             mu_arg = f'-var mu0 {last_mu} '
     else:
-        routine = 'in.segregation'
+        routine = 'in.segregation_gb'
         struct_flag = f'-var structure_name {structure} '
 
     restart_flag = True
@@ -120,9 +128,10 @@ step = {step_ind}/{args.conc_num}
         else:
             suffix = f' -sf omp -pk omp {args.job} '
         
-        task = (f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in  {routine} ' + mu_arg +
+        task = (f'mpirun --bind-to core -np {args.np} lmp_intel_cpu_openmpi -in  {routine} ' + mu_arg +
                 f'-var name {name} ' + 
-                struct_flag +
+                struct_flag + ' ' +
+                f'-var gb_list_file {gb_list_file} ' +
                 f'-var conc_f {conc_range[step_ind]} -var kappa_f {args.kappa} ' + 
                 suffix)
 
@@ -131,9 +140,7 @@ step = {step_ind}/{args.conc_num}
         logging.info(msg)
 
         counter = 0
-        N_conv = 0
         file_count = args.zero_count
-        N_conv_tot = 0
         last_counter = 0
         datfile = ''
         exitflag = False
@@ -215,18 +222,22 @@ step = {step_ind}/{args.conc_num}
                     
                     plot_args.name = args.name
                     plot_args.src = src
+                    plot_args.temp = False
                     plot_args.hide = (not args.plot)
                     plot_args.slope_conv = slope_conv
                     plot_args.postfix = args.postfix
-                    slope, E_mean = plot(plot_args)
+                    slope, E_mean = plot(plot_args) # slope - eV/atom/MC step; E_mean - eV/atom
                     slope = np.array(slope)
-                    _N_conv_tot = np.sum(np.abs(slope)<=slope_conv)
-                    if _N_conv_tot > N_conv_tot:
-                        N_conv += (_N_conv_tot-N_conv_tot)
-                    N_conv_tot = _N_conv_tot
                     if len(slope)>0:
-                        if slope[-1]>slope_conv:
+                        if slope[-1]<slope_conv:
                             N_conv = 0
+                            for i in range(0, len(slope)):
+                                if np.abs(slope[-1-i]) <= slope_conv:
+                                     N_conv += 1
+                                else: 
+                                    break
+                    else:
+                        N_conv = 0
                         
                     msg = f'convergence criteria achieved in {N_conv} points'
                     print(msg)
@@ -269,7 +280,7 @@ step = {step_ind}/{args.conc_num}
                 print(msg)
                 logging.info(msg) 
                 restart_flag=True  
-                routine = 'in.segregation_r'
+                routine = 'in.segregation_gb_r'
                 struct_flag = ''
                 mu_arg = f'-var mu0 {mu} '
         else:
@@ -278,7 +289,7 @@ step = {step_ind}/{args.conc_num}
             logging.info(msg) 
             step_ind += 1
             restart_flag=True  
-            routine = 'in.segregation_r'
+            routine = 'in.segregation_gb_r'
             struct_flag = ''
             if step_ind >= args.conc_num:
                 msg = 'All done'
@@ -306,12 +317,10 @@ if __name__ == '__main__':
                         help='show the thermodynamic plot')
     parser.add_argument("--loops", required=False, default=100, type=int,
                         help='draw the thermodynamic plot each <N> loops')
-    parser.add_argument("--samples", required=False, default=100, type=int, help='how many samples to save')
-    parser.add_argument("--zero-count", dest='zero_count', required=False, default=0, type=int, help='start numeration of saving samples from this number')
-    parser.add_argument("--ovito", required=False, default=False, action='store_true',
-                        help='open the dump in ovito')
+    parser.add_argument("--samples", required=False, default=1, type=int, help='how many samples to save')
+    parser.add_argument("--zero-count", dest='zero_count', required=False, default=0, type=int, 
+                        help='start numeration of saving samples from this number')
     parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
-    parser.add_argument("--thermo", required=False, default='berendsen_relax')
     args = parser.parse_args()
     main(args)
 
