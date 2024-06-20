@@ -8,7 +8,7 @@ boundary p p p
 variable name index STGB_210 #should be selected by user
 variable structure_name index sname
 
-variable self index minimize
+variable self index berendsen_press_cooling
 variable path0 index workspace
 variable pot_path index potentials
 variable home index scripts
@@ -20,14 +20,13 @@ variable structure index ${path}/${dat}/${structure_name}
 
 shell mkdir ../${path}/logs
 log ../${path}/logs/${self}.log
-shell rm log.lammps
+#shell rm log.lammps
 
 shell mkdir ../${path}/${dat}
 
-variable thermo_step_R equal 500
-variable dump_step_R equal 500
-variable rnd_seed_R index 12345
-include minimization_params.txt
+variable thermo_step_BR equal 500
+variable dump_step_BR equal 500
+variable rnd_seed_BR equal 12345
 include ../${path}/input.txt 
 print " "
 print "%%%%%%%%%%%%%%%%%%%%%%%%%"
@@ -36,11 +35,14 @@ shell cat ../${path}/input.txt
 print " "
 print "%%%%%%%%%%%%%%%%%%%%%%%%%"
 print " "
+variable dt equal ${dt_BR}
 
 
 variable dump_path index ${path}/${dump}/${self}
 shell mkdir ../${path}/${dump}
 shell mkdir ../${dump_path}
+
+timestep ${dt}
 
 # ATOMS DEFINITION
 read_data ../${structure} nocoeff
@@ -55,27 +57,27 @@ shell cd ../${home}
 ######################################
 # DEFINE THERMO AND OUTPUT
 
-thermo_style custom time press pe
-thermo 10
+thermo_style custom time temp press pe lx
+thermo ${thermo_step_BR}
 shell mkdir ../${path}/${thermo_output}
 variable file index ../${path}/${thermo_output}/${self}.txt
-print "#time; temp; press; pe" append ${file} screen no
-fix out all print 10 "$(time); $(press); $(pe)" append ${file} screen no
-dump 1 all cfg 100 ../${dump_path}/dump_*.cfg mass type xs ys zs
+print "thermo output ${self}.txt"
+print "time; temp; press; pe; lx" file ${file} screen no
+print "##dt = ${dt}" append ${file} screen no
+fix out all print ${thermo_step_BR} "$(time); $(temp); $(press); $(pe); $(lx)" append ${file} screen no
+dump 1 all cfg ${dump_step_BR} ../${dump_path}/dump_*.cfg mass type xs ys zs
 dump_modify 1 element ${element1} 
 print "dumpfile ../${dump_path}/dump_0.cfg"
+######################################
+# START
+fix barostat all press/berendsen iso ${Press} ${Press} $(1000.0*dt) modulus 1000000
+fix NVT all nvt temp ${T} 1 $(100.0*dt)
+run ${berendsen_relax_steps_cooling}
 
-# ---------- Run Minimization --------------------- 
-minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
-fix 1 all box/relax iso ${Press} vmax 0.01
-
-minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
 shell cd ../${path}/${dat}
-write_data ${self}.dat
-print "datfile ${self}.dat"
+write_data cooled_T${T}_steps${berendsen_relax_steps_cooling}.dat
+print "datfile cooled_T${T}P_${Press}_steps${berendsen_relax_steps_cooling}.dat"
 shell cd ../../../${home} 
-variable Peng equal pe
-run 0
-print "Seg energy ${Peng}"
+
 shell rm log.lammps
 print "All done"

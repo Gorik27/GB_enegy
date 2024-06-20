@@ -120,7 +120,7 @@ variable mut delete
 print "mu = ${mu}"
 print "T = ${T_c}"
 
-if "${T_c} <= 0" then "jump SELF end"
+if "${T_c} <= 50" then "jump SELF end"
 unfix sgcmc
 fix sgcmc GB sgcmc ${md_steps} 1 ${T_c} ${mu} variance ${kappa} $(v_conc/100)
 

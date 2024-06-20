@@ -12,7 +12,7 @@ def main(args):
     inp = args.inp
     file = f"../workspace/{name}/thermo_output/{inp}.txt"
     print(file)
-    df = pd.read_csv(file, sep='; ', comment='#', header=0, index_col=None)
+    df = pd.read_csv(file, sep=';', comment='#', header=0, index_col=None)
     t = df['time']
     pe = df['pe']
     T = df['temp']
@@ -136,7 +136,7 @@ def main(args):
 
     f.suptitle(f"{inp.replace('_', ' ')} {name} {round(t[-1])}ps")
     f.tight_layout()
-    plt.savefig(f'../workspace/{name}/images/plot.{inp}_time{round(t[-1])}_{args.postfix}.png')
+    plt.savefig(f'../workspace/{name}/images/plot.{inp}_{args.postfix}.png')
     plt.show()
 
 

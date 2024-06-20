@@ -44,9 +44,9 @@ def main(args):
     else:
         mu_arg = ''
 
-    print(f'workspace/{name}/dat/segregation_*_k_{int(args.file_kappa)}.dat')
+    print(f'workspace/{name}/dat/segregation_*_k_{float(args.file_kappa)}.dat')
     structures = []
-    for filename in glob(f'workspace/{name}/dat/segregation_*_k_{int(args.file_kappa)}.dat'):
+    for filename in glob(f'workspace/{name}/dat/segregation_*_k_{float(args.file_kappa)}.dat'):
         print(filename)   
         structures.append(filename.split('/')[-1])
 
@@ -211,7 +211,7 @@ def main(args):
                     plot_args.src = src
                     plot_args.hide = (not args.plot)
                     plot_args.slope_conv = slope_conv
-                    plot_args.postfix = args.postfix
+                    plot_args.postfix = f'cooling{args.postfix}'
                     plot_args.temp = True
                     slope, E_mean = plot(plot_args) # slope - eV/atom/MC step; E_mean - eV/atom
                     

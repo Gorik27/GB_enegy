@@ -103,7 +103,7 @@ variable T_c equal "v_T*(1-time/(v_T/v_seg_cooling_rate))"
 
 fix NVT all langevin ${T_c} ${T_c} $(100*dt) 12345
 fix integrate all nph iso 0.0 0.0 $(1000*dt)
-fix sgcmc GB sgcmc ${md_steps} 1 ${T_c} ${mu} variance ${kappa} $(v_conc/100)
+fix sgcmc GB sgcmc ${md_steps} 1 ${T_c} ${mu} variance ${kappa} $(v_conc/100) #window_size 0.77
 print """
 
 
@@ -125,7 +125,7 @@ variable mut delete
 print "mu = ${mu}"
 print "T = ${T_c}"
 
-if "${T_c} <= 0" then "jump SELF end"
+if "${T_c} <= 50" then "jump SELF end"
 unfix sgcmc
 fix sgcmc GB sgcmc ${md_steps} 1 ${T_c} ${mu} variance ${kappa} $(v_conc/100)
 
