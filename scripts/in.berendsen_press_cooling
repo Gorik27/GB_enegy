@@ -75,7 +75,7 @@ fix NVT all nvt temp ${T} 1 $(100.0*dt)
 run ${berendsen_relax_steps_cooling}
 
 shell cd ../${path}/${dat}
-write_data cooled_T${T}_steps${berendsen_relax_steps_cooling}.dat
+write_data cooled_T${T}P_${Press}_steps${berendsen_relax_steps_cooling}.dat
 print "datfile cooled_T${T}P_${Press}_steps${berendsen_relax_steps_cooling}.dat"
 shell cd ../../../${home} 
 
