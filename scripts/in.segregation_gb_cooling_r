@@ -16,8 +16,9 @@ variable dump index dump
 variable structure index ${path}/${name}/${dat}/${structure_name}
 variable gbpath index ${path}/${name}
 variable gb_list_file index None
+variable postfix index 1_1
 
-read_restart  ../${path}/${name}/${dat}/segregation_cooling.restart.1
+read_restart  ../${path}/${name}/${dat}/segregation_cooling_{postfix}.restart.1
 
 shell mkdir ../${gbpath}/logs
 log ../${gbpath}/logs/${self}.log

@@ -126,7 +126,7 @@ output_file = f"../workspace/{args.name}/segregation_coolded_{tasklabel}{args.po
 if not os.path.isfile(output_file):
     with open(output_file, 'a') as f:
         f.write('#segregation cooling output\n')
-        f.write('c,E,mu\n')
+        f.write('c,cavg,E,mu\n')
 else:
     with open(output_file, 'r') as f:
         lines = f.read().split('\n')
@@ -187,6 +187,7 @@ for i, structure in enumerate(structures):
                 struct_flag + ' ' +
                 f'-var gb_list_file {gb_list_file} ' +
                 f'-var conc_f {conc} -var kappa_f {kappa} ' + 
+                f'-var postfix {tasklabel}' + 
                 suffix)
                 
 
