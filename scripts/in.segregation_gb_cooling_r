@@ -6,7 +6,8 @@ atom_modify map array
 variable name index STGB_210 #should be selected by user
 variable structure_name index surface_thermal_relaxed_T500_steps1000.dat #should be selected by user
 
-variable self index segregation_cooling
+variable postfix index 1_1
+variable self index segregation_cooling_${postfix}
 variable dat index dat
 variable path index workspace
 variable pot_path index potentials
@@ -16,9 +17,8 @@ variable dump index dump
 variable structure index ${path}/${name}/${dat}/${structure_name}
 variable gbpath index ${path}/${name}
 variable gb_list_file index None
-variable postfix index 1_1
 
-read_restart  ../${path}/${name}/${dat}/segregation_cooling_{postfix}.restart.1
+read_restart  ../${path}/${name}/${dat}/${self}.restart.1
 
 shell mkdir ../${gbpath}/logs
 log ../${gbpath}/logs/${self}.log
