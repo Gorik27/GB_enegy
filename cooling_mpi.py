@@ -12,6 +12,8 @@ parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--np", required=False, default=1)          
 parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
+parser.add_argument("--segcool", default=False, action='store_true', required=False,
+    help='cooled only to temperature T_kin')
 parser.add_argument("--save", default=False, action='store_true', required=False,
     help='save plot data in file')
 parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
@@ -37,7 +39,10 @@ if not args.plot:
         if not flag:
             raise ValueError(f'cannot find structure in conf.txt')
 
-    script = 'in.berendsen_relax_cooling'
+    if args.segcool:
+        script = 'in.berendsen_relax_cooling_to_kin'
+    else:
+        script = 'in.berendsen_relax_cooling'
 
     if args.jobs == 1:
         suffix = ''
@@ -47,6 +52,7 @@ if not args.plot:
     exitflag = False
     db_flag = False
     db = 0
+    DB = 0
     error_msg = ''
 
     print('starting LAMMPS...')
@@ -57,6 +63,7 @@ if not args.plot:
         for line in p.stdout:
             if "Dangerous builds" in  line:
                 db = int(line.split()[-1])
+                DB = max(DB, db)
                 if db!=0:
                     print('Dengerous builds:', db)
                     db_flag = True
@@ -83,7 +90,7 @@ if not args.plot:
 
     print('done\n')
     if db_flag:
-        print(f'WARNING!!!\nDengerous neighboor list buildings: {db}')
+        print(f'WARNING!!!\nDengerous neighboor list buildings: {DB}')
 
     output=''
     flag = False

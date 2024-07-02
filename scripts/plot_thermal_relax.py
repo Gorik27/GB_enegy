@@ -12,7 +12,7 @@ def main(args):
     inp = args.inp
     file = f"../workspace/{name}/thermo_output/{inp}.txt"
     print(file)
-    df = pd.read_csv(file, sep=';', comment='#', header=0, index_col=None)
+    df = pd.read_csv(file, sep='; ', comment='#', header=0, index_col=None)
     t = df['time']
     pe = df['pe']
     T = df['temp']

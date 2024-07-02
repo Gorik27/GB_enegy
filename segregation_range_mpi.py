@@ -43,7 +43,7 @@ def main(args):
         flag=False
         with open(fname, 'r') as f :
             for line in f:
-                if 'berendsen' in line:
+                if args.previous in line:
                     structure = line.split()[-1]
                     print(structure)
                     flag = True
@@ -321,6 +321,8 @@ if __name__ == '__main__':
     parser.add_argument("--zero-count", dest='zero_count', required=False, default=0, type=int, 
                         help='start numeration of saving samples from this number')
     parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
+    parser.add_argument('--previous', default='berendsen', required=False, 
+    help='tag of previous step in conf.txt: "berendsen"; "cooled"')
     args = parser.parse_args()
     main(args)
 

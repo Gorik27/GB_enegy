@@ -82,11 +82,5 @@ if not args.plot:
         with open(f'../workspace/{args.name}/conf.txt', 'w') as f:
             f.write(output)
 
-print('plotting...')
-impath = f'../workspace/{args.name}/images'
-Path(impath).mkdir(exist_ok=True)  
-outpath = f'../workspace/{args.name}/thermo_output'
-Path(outpath).mkdir(exist_ok=True)  
-
 
 print('All done')

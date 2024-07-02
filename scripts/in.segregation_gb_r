@@ -69,7 +69,7 @@ shell cd ../${home}
 # FIXES
 compute peratom all pe/atom
 
-fix NVT all langevin ${T} ${T} $(100*dt) 12345
+fix NVT all langevin ${T_kin} ${T_kin} $(100*dt) 12345
 fix integrate all nph iso 0.0 0.0 $(1000*dt)
 
 variable conc_fix equal f_sgcmc[4]*100
@@ -91,13 +91,13 @@ fix avg_conc all ave/time ${md_steps} ${mc_steps} $(v_md_steps*v_mc_steps) v_con
 ######################################
 # GB group
 
-variable gb_list atomfile ${gb_list_file}
-group GB variable gb_list
+#variable gb_list atomfile ${gb_list_file}
+#group GB variable gb_list
 
 
 ######################################
 # START
-fix sgcmc GB sgcmc ${md_steps} 1 ${T} ${mu} variance ${kappa} $(v_conc/100)
+fix sgcmc all sgcmc ${md_steps} 1 ${T_chem} ${mu} variance ${kappa} $(v_conc/100)
 print """
 
 
@@ -118,7 +118,7 @@ variable mu equal $(v_mut+(f_avg_conc-v_conc)*v_dmu)
 variable mut delete
 print "mu = ${mu}"
 unfix sgcmc
-fix sgcmc GB sgcmc ${md_steps} 1 ${T} ${mu} variance ${kappa} $(v_conc/100)
+fix sgcmc all sgcmc ${md_steps} 1 ${T_chem} ${mu} variance ${kappa} $(v_conc/100)
 
 shell cd ../${gbpath}/${dat}
 write_data ${self}_${conc}_k_${kappa}.dat
