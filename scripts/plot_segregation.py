@@ -33,6 +33,7 @@ def main(args):
         raise ValueError('in input file there are not variable md_steps')
 
     file = f"../workspace/{args.name}/thermo_output/{args.src}"
+    Natoms = 1
     with open(file, 'r') as f:
         for line in f:
             if '##Natoms' in line:

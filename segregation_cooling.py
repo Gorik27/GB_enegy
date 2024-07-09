@@ -101,6 +101,7 @@ structures = []
 for filename in glob(f'workspace/{name}/dat/segregation_[0-9]*.dat'):
         structures.append(filename.split('/')[-1])
 
+log('All files (unsorted):', str(structures))
 structures = sorted(structures,
                     key=(lambda s: float(s.split('_')[1])))
 

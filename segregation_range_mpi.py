@@ -24,6 +24,8 @@ def main(args):
             for line in f:
                 if 'variable kappa equal' in line:
                     kappa = float(line.split(' ')[-1])
+    if int(kappa)==kappa:
+        kappa = int(kappa)
     logname = f'segregation_range_c_{args.conc1}_{args.conc2}_N_{args.conc_num}_k_{kappa}'
     logging.basicConfig(filename=f'workspace/{name}/{logname}.log', 
                         encoding='utf-8', 
@@ -37,22 +39,6 @@ def main(args):
 {current_time}
 ################
     """)
-    
-    if not structure and not args.restart:
-        fname = f'workspace/{name}/conf.txt'
-        flag=False
-        with open(fname, 'r') as f :
-            for line in f:
-                if args.previous in line:
-                    structure = line.split()[-1]
-                    print(structure)
-                    flag = True
-        if not flag:
-            raise ValueError(f'cannot find structure in conf.txt')
-    if args.mu:
-        mu_arg = f'-var mu0 {args.mu} '
-    else:
-        mu_arg = ''
 
     print(name, '\n')
     logging.info(f'{name}\n')
@@ -80,6 +66,7 @@ def main(args):
         with open(output_file, 'a') as f:
             f.write('segregation range output\n')
             f.write('c,E,mu\n')
+        continue_flag = False
     else:
         with open(output_file, 'r') as f:
             lines = f.read().split('\n')
@@ -90,24 +77,55 @@ def main(args):
                 last_conc = float(last_point[0])
                 last_mu = float(last_point[2])
                 step_ind = np.where(conc_range==last_conc)[0][0]+1
-                args.restart = True
+                if int(last_conc)==last_conc:
+                    last_conc = int(last_conc)
+                structure = f'segregation_{last_conc}_k_{kappa}.dat'
+        continue_flag = True
 
-    if args.restart:
+    if conc_range[step_ind] == int(conc_range[step_ind]):
+        conc_range_i = int(conc_range[step_ind])
+    else:
+        conc_range_i = conc_range[step_ind]
+
+    thermo = f"../workspace/{args.name}/thermo_output/segregation_{conc_range_i}_k_{kappa}.txt"
+    print(thermo)
+    if os.path.isfile(thermo):
+        restart = True
+        print('restart')
+    else:
+        restart = False
+
+    if not structure and not restart and not continue_flag:
+        fname = f'../workspace/{name}/conf.txt'
+        flag=False
+        with open(fname, 'r') as f :
+            for line in f:
+                if args.previous in line:
+                    structure = line.split()[-1]
+                    print(structure)
+                    flag = True
+        if not flag:
+            raise ValueError(f'cannot find structure in conf.txt')
+    if args.mu:
+        mu_arg = f'-var mu0 {args.mu} '
+    else:
+        mu_arg = ''
+
+    if restart:
         routine = 'in.segregation_gb_r'
         struct_flag = ''
         if mu_arg == '':
-            thermo = f"../workspace/{args.name}/thermo_output/segregation_{conc_range[step_ind]}_k_{kappa}.txt"
             if os.path.isfile(thermo):
                 with open(thermo, 'r') as f:
                     lines = f.read().split('\n')
                     while '' in lines: lines.remove('')
                     if not '#' in lines[-1]:
                         last_mu = float(lines[-1].split('; ')[-1])
-            mu_arg = f'-var mu0 {last_mu} '
     else:
         routine = 'in.segregation_gb'
         struct_flag = f'-var structure_name {structure} '
 
+    mu_arg = f'-var mu0 {last_mu} '
     restart_flag = True
 
     while restart_flag:
@@ -289,8 +307,8 @@ step = {step_ind}/{args.conc_num}
             logging.info(msg) 
             step_ind += 1
             restart_flag=True  
-            routine = 'in.segregation_gb_r'
-            struct_flag = ''
+            routine = 'in.segregation_gb'
+            struct_flag = f'-var structure_name {datfile}'
             if step_ind >= args.conc_num:
                 msg = 'All done'
                 print(msg)
