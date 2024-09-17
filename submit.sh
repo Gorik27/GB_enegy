@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 name=$1
-cat > task_${name} << EOF
+project=final2
+cat > task_${name}_${project} << EOF
 #!/usr/bin/env bash
 #SBATCH --nodes=1
 #SBATCH --ntasks=94
-#SBATCH --job-name=$name
+#SBATCH --job-name=${name}_${project}
 
 module purge
 module purge
@@ -13,7 +14,7 @@ module load openmpi3
 module load mkl
 module list
 
-mpirun --bind-to core -np 94 pw.x -pd .true. -inp ${name}.in > ${name}.out
+python segregation_cooling.py -n ${project} --np 27 -j 3 > workspace/${project}/logs/segregation_cooling.out
 EOF
 module purge
 module purge
@@ -22,4 +23,4 @@ module load openmpi3
 module load mkl
 module list
 
-sbatch task
+sbatch task_${name}_${project}

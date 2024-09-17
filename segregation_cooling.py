@@ -113,15 +113,6 @@ concs, structures = select_job_partition(args, structures)
 if (os.path.abspath(os.getcwd()).split('/'))[-1]!='scripts':
     os.chdir('scripts')
 
-# GB group
-id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
-gb_list = np.loadtxt(id_file).astype(int)[:,0]
-gb_list_arg = (''.join(f'{id} 1\n' for id in gb_list))
-gb_list_arg = f'{len(gb_list)}\n{gb_list_arg}'
-gb_list_file = f'../workspace/{args.name}/dump/CNA/GB_group_{tasklabel}.txt'
-with open(gb_list_file, 'w') as f:
-    f.write(gb_list_arg)
-
 # output file; select files that has not been calculated
 output_file = f"../workspace/{args.name}/segregation_coolded_{tasklabel}{args.postfix}.txt"
 if not os.path.isfile(output_file):
@@ -186,7 +177,6 @@ for i, structure in enumerate(structures):
         task = (f'mpirun -np {args.np} {lmp} -in {routine} ' + mu_arg +
                 f'-var name {name} ' + 
                 struct_flag + ' ' +
-                f'-var gb_list_file {gb_list_file} ' +
                 f'-var conc_f {conc} -var kappa_f {kappa} ' + 
                 f'-var postfix {tasklabel}' + 
                 suffix)
