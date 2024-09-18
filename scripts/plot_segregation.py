@@ -39,11 +39,11 @@ def main(args):
             if '##Natoms' in line:
                 Natoms = int(line.split(' ')[-1])
     df = pd.read_csv(file, sep=';', comment='#', names=['step', 'time','temp', 'pe', 'conc', 'mu'])
-    step_ = df['step']
-    t_ = df['time']
-    pe_ = df['pe']/Natoms
-    c_ = (1-df['conc'])*100
-    T_ = df['temp']
+    step_ = df['step'].values
+    t_ = df['time'].values
+    pe_ = df['pe'].values/Natoms
+    c_ = (1-df['conc'].values)*100
+    T_ = df['temp'].values
     step, t, pe, c, T = [step_[0]], [t_[0]], [pe_[0]], [c_[0]], [T_[0]]
     for i in range(1,len(t_)):
         if t_[i]==t_[i-1]:
