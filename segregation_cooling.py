@@ -99,7 +99,8 @@ logging.info(f"""
 # selecting structure files, jobs spreading between tasks 
 structures = []
 for filename in glob(f'workspace/{name}/dat/segregation_[0-9]*.dat'):
-        structures.append(filename.split('/')[-1])
+        if not 'copy' in filename:
+            structures.append(filename.split('/')[-1])
 
 log('All files (unsorted):', str(structures))
 structures = sorted(structures,
@@ -137,15 +138,11 @@ else:
                     
 log('Files to be calculated:', structures)
 
-# restart
-restart = False 
 
-if restart:
-    routine = 'in.segregation_gb_cooling_r'
-else:
-    routine = 'in.segregation_gb_cooling'
 
 # routine
+
+restart = False 
 
 if args.job == 1:
     suffix = ''
@@ -155,20 +152,39 @@ else:
 for i, structure in enumerate(structures):
     struct_flag = f'-var structure_name {structure} '
 
+    if args.kappa == -1:
+        kappa = float(structure.split('_')[-1].replace('.dat', ''))
+    else:
+        kappa = args.kappa
+    if kappa==int(kappa):
+        kappa = int(kappa)
+
     mu_arg = args.mu
     if not mu_arg:
-        thermo = glob(f"../workspace/{args.name}/thermo_output/{structure.replace('.dat', '.txt')}")[0]
+        conc = structure.split('_')[-3]
+        segrange_file = f"../workspace/{args.name}/thermo_output/segregation_cooling_{tasklabel}_{conc}_k_{kappa}.txt"
+        print(segrange_file)
+        if os.path.isfile(segrange_file):
+            thermo = glob(segrange_file)[0]
+            restart = True
+        else:
+            thermo = glob(f"../workspace/{args.name}/thermo_output/segregation_{conc}_k_{kappa}.txt")[0]
+        log(f'Termo file: {thermo}')
         if os.path.isfile(thermo):
             with open(thermo, 'r') as f:
                 lines = f.read().split('\n')
                 while '' in lines: lines.remove('')
                 if not '#' in lines[-1]:
                     last_mu = float(lines[-1].split('; ')[-1])
+        else:
+            last_mu = 1
         mu_arg = f'-var mu0 {last_mu} '
-    if args.kappa == -1:
-        kappa = float(structure.split('_')[-1].replace('.dat', ''))
+    
+    # restart
+    if restart:
+        routine = 'in.segregation_gb_cooling_r'
     else:
-        kappa = args.kappa
+        routine = 'in.segregation_gb_cooling'
 
     conc = concs[i]
 
@@ -194,7 +210,7 @@ for i, structure in enumerate(structures):
             log('\n')
             for line in p.stdout:
                 if 'ERROR' in line:
-                    raise ValueError(f'ERROR in LAMMPS: {line}')
+                    raise ValueError(f'ERROR in LAMMPS: {line}, see "workspace/{args.name}/logs/{routine.replace("in.", "")}.log"')
                 if 'thermo output file:' in line:
                     src_path = line.split()[-1]
                     src = src_path.split('/')[-1]

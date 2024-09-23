@@ -58,7 +58,7 @@ variable dump_path index ${gbpath}/${dump}/${self}
 shell mkdir ../${gbpath}/${dump}
 shell mkdir ../${dump_path}
 
-timestep ${dt}
+#timestep ${dt}
 
 ######################################
 # DEFINE INTERATOMIC POTENTIAL
@@ -70,7 +70,7 @@ shell cd ../${home}
 ######################################
 # FIXES
 compute peratom all pe/atom
-variable T_c equal "v_T_chem*(1-time/(v_T_chem/v_seg_cooling_rate))"
+variable T_c equal "v_T_chem*(1-step*dt/(v_T_chem/v_seg_cooling_rate))"
 
 variable conc_fix equal f_sgcmc[4]*100
 thermo_style custom step time temp  v_T_c pe v_conc_fix v_mu press
