@@ -106,7 +106,7 @@ VCSGCMC
 
 
 """
-restart 1000 ../${path}/${name}/${dat}/segregation_cooling.restart.1 ../${path}/${name}/${dat}/segregation_cooling.restart.2
+restart 1000 ../${path}/${name}/${dat}/${self}.restart.1 ../${path}/${name}/${dat}/${self}.restart.2
 
 label main_loop
 run $(v_md_steps*v_mc_steps)
