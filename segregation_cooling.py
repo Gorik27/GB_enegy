@@ -73,6 +73,8 @@ parser.add_argument("-p", "--plot", required=False, default=False, action='store
 parser.add_argument("--loops", required=False, default=100, type=int, dest='N_loops',
                     help='draw the thermodynamic plot each <N> loops')
 parser.add_argument("--postfix", required=False, default='', help="add this postfix at the end of output file's names")
+parser.add_argument("--save", required=False, default=False, action='store_true',
+                     help='make save of cooling step if it has not finished')
 args = parser.parse_args()
 
 name = args.name
@@ -187,17 +189,25 @@ for i, structure in enumerate(structures):
         routine = 'in.segregation_gb_cooling'
 
     conc = concs[i]
-
+        
     restart_flag = True
+    
     while restart_flag:
-        task = (f'mpirun -np {args.np} {lmp} -in {routine} ' + mu_arg +
-                f'-var name {name} ' + 
-                struct_flag + ' ' +
-                f'-var conc_f {conc} -var kappa_f {kappa} ' + 
-                f'-var postfix {tasklabel}' + 
-                suffix)
+        if args.save:
+            task = (f'mpirun -np {args.np} {lmp} -in in.savedat_segregation_gb_cooling ' + mu_arg +
+                    f'-var name {name} ' + 
+                    struct_flag + ' ' +
+                    f'-var conc_f {conc} -var kappa_f {kappa} ' + 
+                    f'-var postfix {tasklabel}' + 
+                    suffix)
+        else:
+            task = (f'mpirun -np {args.np} {lmp} -in {routine} ' + mu_arg +
+                    f'-var name {name} ' + 
+                    struct_flag + ' ' +
+                    f'-var conc_f {conc} -var kappa_f {kappa} ' + 
+                    f'-var postfix {tasklabel}' + 
+                    suffix)
                 
-
         counter = 0
         last_counter = 0
         exitflag = False
@@ -290,5 +300,6 @@ for i, structure in enumerate(structures):
                 mu_arg = f'-var mu0 {mu} '
         else:
             log('success') 
-            with open(output_file, 'w') as f:
-                f.write(f'{conc},{avg_conc},{E_mean},{mu}\n')
+            if not args.save:
+                with open(output_file, 'w') as f:
+                    f.write(f'{conc},{avg_conc},{E_mean},{mu}\n')

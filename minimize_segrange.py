@@ -39,6 +39,7 @@ log(f'Current time: {current_time}')
 
 os.chdir('scripts')
 
+
 outfile = f'../workspace/{args.name}/out_minimize_segrange_k_{args.kappa}.txt'
 structures = [s.split('/')[-1] for s in glob(f'../workspace/{args.name}/dat/segregation_cooling_*_k_{args.kappa}.dat')]
 if len(structures)==0 and float(args.kappa)%1==0:
