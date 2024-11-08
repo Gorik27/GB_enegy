@@ -115,10 +115,17 @@ else:
     conc_range_i = conc_range[step_ind]
 
 thermo = f"../workspace/{args.name}/thermo_output/segregation_gb_{conc_range_i}_k_{kappa}.txt"
-print(thermo)
+thermo2 = f"../workspace/{args.name}/thermo_output/segregation_{conc_range_i}_k_{kappa}.txt"
+
 if os.path.isfile(thermo):
     restart = True
     log('restart')
+    log(thermo)
+elif os.path.isfile(thermo2):
+    restart = True
+    log('restart')
+    thermo = thermo2
+    log(thermo)
 else:
     restart = False
 
