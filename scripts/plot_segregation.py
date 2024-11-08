@@ -10,11 +10,15 @@ def rolling_mean(x, w):
     return np.convolve(x, np.ones(w), 'valid') / w
 
 def pretty_round(num):
-    working = str(num-int(num))
-    for i, e in enumerate(working[2:]):
-        if e != '0':
-            return int(num) + float(working[:i+3])
-
+    try:
+        int_num = int(num)
+        working = str(num-int_num)
+        for i, e in enumerate(working[2:]):
+            if e != '0':
+                return int(num) + float(working[:i+3])
+    finally:
+        return num
+        
 def main(args):
     w = args.w
     st = args.st
@@ -103,7 +107,12 @@ def main(args):
     ax3.set_xlabel(f'$step\cdot {st}$')
     ax3.set_ylabel('$\partial_t<E_{pot}>_{roll}, eV/atom/MC step$')
     ax3.plot(res, 'o')
-    ax1.set_xlim((step1.min(), step1.max()))
+    #if (step1.min() is np.nan) or (step1.min() is np.inf) or (step1.max() is np.nan) or (step1.max() is np.inf):
+    #    print(f'Error setting xlims {step1.min()} {step1.max()}')
+    #else:
+    #    print(step1, step1.min(), step1.max(), (step1.min() is np.nan), (step1.max() is np.nan))
+    #    ax1.set_xlim((np.min(step1), np.max(step1)))
+    ax1.set_xlim((step1[0], step1[-1]))
     #ticks = list(ax1.get_xticks()) + [s1, len(pe1)+s1]
     #ax1.set_xticks(ticks)
     #ax1.set_xticklabels(list(map(int, ticks)), rotation='vertical')

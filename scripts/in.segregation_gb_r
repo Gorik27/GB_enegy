@@ -5,7 +5,7 @@ atom_modify map array
 
 variable name index STGB_210 #should be selected by user
 variable structure_name index surface_thermal_relaxed_T500_steps1000.dat #should be selected by user
-variable self index segregation
+variable self index segregation_gb
 variable dat index dat
 variable path index workspace
 variable pot_path index potentials
@@ -15,12 +15,6 @@ variable dump index dump
 variable structure index ${path}/${name}/${dat}/${structure_name}
 variable gbpath index ${path}/${name}
 variable gb_list_file index None
-
-read_restart  ../${path}/${name}/${dat}/segregation.restart.1
-
-shell mkdir ../${gbpath}/logs
-log ../${gbpath}/logs/${self}.log
-shell rm log.lammps
 
 shell mkdir ../${gbpath}/${dat}
 
@@ -52,7 +46,13 @@ variable potname index ${potname_alloy}
 if "${conc_f}!=-1" then "variable conc equal ${conc_f}"
 if "${kappa_f}!=-1" then "variable kappa equal ${kappa_f}"
 
-variable dump_path index ${gbpath}/${dump}/${self}
+read_restart  ../${path}/${name}/${dat}/${self}_${conc}.restart.1
+
+shell mkdir ../${gbpath}/logs
+log ../${gbpath}/logs/${self}_${conc}.log
+shell rm log.lammps
+
+variable dump_path index ${gbpath}/${dump}/${self}_${conc}
 shell mkdir ../${gbpath}/${dump}
 shell mkdir ../${dump_path}
 
@@ -86,13 +86,6 @@ print "dumpfile ../${dump_path}/dump_${conc}_k_${kappa}_0.cfg"
 fix avg_conc all ave/time ${md_steps} ${mc_steps} $(v_md_steps*v_mc_steps) v_conc_fix file  ../${gbpath}/${thermo_output}/conc_avg.txt
 
 ######################################
-# GB group
-
-#variable gb_list atomfile ${gb_list_file}
-#group GB variable gb_list
-
-
-######################################
 # START
 fix sgcmc all sgcmc ${md_steps} 1 ${T_chem} ${mu} variance ${kappa} $(v_conc/100)
 print """
@@ -102,7 +95,7 @@ VCSGCMC
 
 
 """
-restart 1000 ../${path}/${name}/${dat}/segregation.restart.1 ../${path}/${name}/${dat}/segregation.restart.2
+restart 1000 ../${path}/${name}/${dat}/${self}_${conc}.restart.1 ../${path}/${name}/${dat}/${self}_${conc}.restart.2
 
 label main_loop
 run $(v_md_steps*v_mc_steps)
