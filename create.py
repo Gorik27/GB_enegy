@@ -4,6 +4,7 @@ from subprocess import Popen, PIPE
 import time, re, shutil, sys, glob
 import numpy as np
 sys.path.insert(1, f'{sys.path[0]}/scripts')
+from set_lammps import lmp
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-n", "--name", required=True)
@@ -15,7 +16,11 @@ args = parser.parse_args()
 
 outname = 'polycrystall'
 os.chdir('scripts')
-task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.find_minimum -var name {args.name} -sf omp -pk omp {args.jobs}'
+if args.jobs > 1:
+    suffix =  f'-sf omp -pk omp {args.jobs}'
+else:
+    suffix = ''
+task = f'mpirun -np {args.np} {lmp} -in in.find_minimum -var name {args.name} {suffix}'
 exitflag = False
 
 print('finding structure...')
@@ -105,7 +110,7 @@ shutil.move(f'{outname}.lmp', f'../dat/{outname}.dat')
 print('done\n')
 
 os.chdir('../../../scripts')
-task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.minimize -var name {args.name} -var structure_name {outname}.dat -sf omp -pk omp {args.jobs}'
+task = f'mpirun -np {args.np} {lmp} -in in.minimize -var name {args.name} -var structure_name {outname}.dat {suffix}'
 exitflag = False
 
 print('relaxing structure...')
