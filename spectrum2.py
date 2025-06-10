@@ -60,6 +60,7 @@ for i in range(i0, len(ids)):
     id = ids[i]
     print(f'#{i+1}/{len(ids)} id {id} cna {selected[i, 1]}')
     task = f'mpirun -np {args.np} {lmp} -in in.seg_minimize -var name {args.name} -var structure_name {structure} -var id {id} {suffix}'
+    print(task)
     exitflag = False
     db_flag = False
     db = 0
