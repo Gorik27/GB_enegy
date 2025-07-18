@@ -23,6 +23,7 @@ run_in = ['potential UNEP_v1.txt',
         f'minimize fire {args.ftol} {args.maxiter} 1',
         'velocity 0.000000000001',
         'ensemble nve',
+        'time_step 0',
         'dump_restart 1',
         'dump_exyz 1', 
         'run 1']
@@ -36,6 +37,7 @@ run_in = ['potential UNEP_v1.txt',
         f'minimize fire {args.ftol} {args.maxiter}',
         'velocity 0.000000000001',
         'ensemble nve',
+        'time_step 0',
         'dump_exyz 1', 
         'run 1']
 
