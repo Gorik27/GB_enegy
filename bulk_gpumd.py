@@ -14,24 +14,26 @@ parser.add_argument("--maxiter", required=False, default='100000', help='max. nu
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-f", "--force", default=False, action='store_true', required=False,
                      help='force to restart calculations')
+parser.add_argument("--nogbs", default=False, action='store_true', required=False,
+                     help='dont check GBs file')
 args = parser.parse_args()
 
 os.chdir('scripts')
 
-    
-id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
-outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
+if not args.nogbs:
+    id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
+    outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
 
-selected = np.loadtxt(id_file).astype(int)
-if len(selected.shape)==1:
-    ids = selected
-elif selected.shape[1]==2:
-    ids = selected[:,0]
-else:
-    raise ValueError(f'Unexpected size of GBs.txt file (number of columns)! Expected to has 1 (id) or 2 (id cna) columns ')
+    selected = np.loadtxt(id_file).astype(int)
+    if len(selected.shape)==1:
+        ids = selected
+    elif selected.shape[1]==2:
+        ids = selected[:,0]
+    else:
+        raise ValueError(f'Unexpected size of GBs.txt file (number of columns)! Expected to has 1 (id) or 2 (id cna) columns ')
 
-if args.id in ids:
-    raise ValueError(f'{args.id} is ID of GB atom!!!!')
+    if args.id in ids:
+        raise ValueError(f'{args.id} is ID of GB atom!!!!')
 
 id = args.id
 

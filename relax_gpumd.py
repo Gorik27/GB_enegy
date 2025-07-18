@@ -28,6 +28,8 @@ run_in = ['potential UNEP_v1.txt',
         'dump_exyz 1', 
         'run 1']
 
+print(run_in)
+
 tmp_path = f'../workspace/{args.name}/tmp/relax_box'
 if os.path.exists(tmp_path):
     shutil.rmtree(tmp_path)
