@@ -52,6 +52,7 @@ run_in = ['potential UNEP_v1.txt',
         'velocity 0.000000000001',
         'dump_thermo 1',
         'ensemble nve',
+        'time_step 0',
         'run 1']
 tmp_path = f'../workspace/{args.name}/tmp/bulk_{id}'
 if os.path.exists(tmp_path):
