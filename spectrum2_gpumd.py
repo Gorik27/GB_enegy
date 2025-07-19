@@ -64,8 +64,8 @@ for i in range(i0, len(ids)):
             'velocity 0.000000000001',
             'ensemble nve',
             'time_step 0',
-            'dump_xyz -1 relaxed.xyz',
-            'dump_thermo -1',
+            'dump_exyz 1',
+            'dump_thermo 1',
             'run 1']
     tmp_path = f'../workspace/{args.name}/tmp/spectrum_{id}'
     if os.path.exists(tmp_path):

@@ -19,10 +19,10 @@ parser.add_argument("--nogbs", default=False, action='store_true', required=Fals
 args = parser.parse_args()
 
 os.chdir('scripts')
+outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
 
 if not args.nogbs:
     id_file = f'../workspace/{args.name}/dump/CNA/GBs.txt'
-    outname = f'../workspace/{args.name}/dump/CNA/bulkEs.txt'
 
     selected = np.loadtxt(id_file).astype(int)
     if len(selected.shape)==1:
