@@ -11,6 +11,7 @@ parser.add_argument("-n", "--name", required=True)
 parser.add_argument("-o", "--idfile", default='GBs.txt', 
                     help='filename in <project/dump/CNA> folder with inds of GB sites to compute')
 parser.add_argument("-s", "--structure", default='relaxed.xyz')
+parser.add_argument("--solute", default='Ni', type=str)
 parser.add_argument("--ftol", required=False, default='1.0e-8', help='force tolerance for FIRE minimizer')
 parser.add_argument("--maxiter", required=False, default='100000', help='max. number of iterations for FIRE minimizer')
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
@@ -55,8 +56,12 @@ for i in range(i0, len(ids)):
     
     cs = atoms.get_chemical_symbols()
     if id0 != -1:
-        cs[id0] = 'Ag'
-    cs[id] = 'Ni'
+        if id0 != 0:
+            c0 = cs[0]
+        else:
+            c0 = cs[1]
+        cs[id0] = c0
+    cs[id] = args.solute
     atoms.set_chemical_symbols(cs)
 
     run_in = ['potential UNEP_v1.txt',
@@ -64,7 +69,7 @@ for i in range(i0, len(ids)):
             'velocity 0.000000000001',
             'ensemble nve',
             'time_step 0',
-            'dump_exyz 1',
+            #'dump_exyz 1',
             'dump_thermo 1',
             'run 1']
     tmp_path = f'../workspace/{args.name}/tmp/spectrum_{id}'
