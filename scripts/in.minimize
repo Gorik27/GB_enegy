@@ -66,8 +66,8 @@ dump_modify 1 element ${element1}
 print "dumpfile ../${dump_path}/dump_0.cfg"
 
 # ---------- Run Minimization --------------------- 
-minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
-fix 1 all box/relax iso ${Press} vmax 0.01
+#minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
+#fix 1 all box/relax iso ${Press} vmax 0.01
 
 minimize ${etol} ${ftol} ${maxiter} ${maxeval} 
 shell cd ../${path}/${dat}

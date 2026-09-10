@@ -43,7 +43,7 @@ if not args.plot:
         suffix = ''
     else:
         suffix = f' -sf omp -pk omp {args.jobs} '
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in {script} -var name {args.name} -var structure_name {structure} {suffix}'
+    task = f'mpirun -np {args.np} {lmp} -in {script} -var name {args.name} -var structure_name {structure} {suffix}'
     exitflag = False
     db_flag = False
     db = 0

@@ -12,10 +12,10 @@ parser.add_argument("-j", "--jobs", type=int, required=False, default=1)
 parser.add_argument("--np", required=False, default=1)
 parser.add_argument("-l", "--langevin", default=False, action='store_true', required=False, 
                     help='use langevin thermostat instead of Noose-Hover')
+parser.add_argument("--alloy", default=False, action='store_true', required=False)
 parser.add_argument("--heat", default=False, action='store_true', required=False, 
                     help='heat from T0 to T')
 parser.add_argument("--T0", required=False, default=None, type=float, help='use with flag --heat')                   
-parser.add_argument("--offset", required=False, type=int, default=0)
 parser.add_argument("-s", "--structure", required=False)
 parser.add_argument("--save", default=False, action='store_true', required=False,
     help='save plot data in file')
@@ -23,7 +23,6 @@ parser.add_argument("--postfix", required=False, default='', help="add this post
 parser.add_argument("-v", "--verbose", default=False, action='store_true', required=False)
 parser.add_argument("-p", "--plot", default=False, action='store_true', required=False, help='only plot graphics')
 parser.add_argument("-m", "--mean-width", dest='mean_width', required=False, default=50, type=int)
-parser.add_argument("--min-grain", dest='min_grain', required=False, default=1000, type=int)
 parser.add_argument("--dump-step", dest='dump_step', required=False, type=int)
 parser.add_argument("--thermo", required=False, default='berendsen_relax')
 args = parser.parse_args()
@@ -54,7 +53,13 @@ if not args.plot:
         suffix = ''
     else:
         suffix = f' -sf omp -pk omp {args.jobs} '
-    task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in {script} -var name {args.name} -var structure_name {structure} {suffix}'
+    
+    if args.alloy:
+        alloy_sf = '-var alloy 1' 
+    else:
+        alloy_sf = ''
+
+    task = f'mpirun -np {args.np} {lmp} -in {script} -var name {args.name} -var structure_name {structure} {alloy_sf} {suffix}'
     exitflag = False
     db_flag = False
     db = 0
@@ -90,7 +95,7 @@ if not args.plot:
                 print(line, end='')   
                     
     if not exitflag:
-        raise ValueError(f'Error in LAMMPS: {error_msg}')
+        raise ValueError(f'Error in LAMMPS: {error_msg}\nlog file: "workspace/{args.name}/logs/berendsen_relax.log"')\
 
     print('done\n')
     if db_flag:

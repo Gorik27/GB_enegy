@@ -29,7 +29,7 @@ if not structure:
         raise ValueError(f'cannot find structure in conf.txt')
 
 
-task = f'mpirun -np {args.np} lmp_intel_cpu_openmpi -in in.minimize -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
+task = f'mpirun -np {args.np} {lmp} -in in.minimize -var name {args.name} -var structure_name {structure} -sf omp -pk omp {args.jobs}'
 exitflag = False
 db_flag = False
 db = 0

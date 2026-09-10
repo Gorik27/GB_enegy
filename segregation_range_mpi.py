@@ -28,6 +28,8 @@ parser.add_argument("-n", "--name", required=True, help='for example STGB_210')
 parser.add_argument("-s", "--structure", required=False, default=False)
 parser.add_argument("-v", "--verbose", required=False, default=False, action='store_true',
                     help='show LAMMPS outpt')
+parser.add_argument("--ms", required=False, default=False, action='store_true',
+                    help='parform MS instead MD')
 parser.add_argument("-r", "--restart", required=False, default=False, action='store_true')
 parser.add_argument("-j", "--job", required=False, default=1)
 parser.add_argument("--np", required=False, default=1)
@@ -68,6 +70,9 @@ logging.basicConfig(filename=f'workspace/{name}/{logname}.log',
                     encoding='utf-8', 
                     format='%(message)s',
                     level=logging.INFO)
+
+if not os.path.isfile(f'workspace/{name}/segregation_plot.txt'):
+    raise ValueError(f'file "workspace/{name}/segregation_plot.txt" does not exist!')
 
 log(f"""
 ################
@@ -117,15 +122,18 @@ else:
 thermo = f"../workspace/{args.name}/thermo_output/segregation_gb_{conc_range_i}_k_{kappa}.txt"
 thermo2 = f"../workspace/{args.name}/thermo_output/segregation_{conc_range_i}_k_{kappa}.txt"
 
-if os.path.isfile(thermo):
-    restart = True
-    log('restart')
-    log(thermo)
-elif os.path.isfile(thermo2):
-    restart = True
-    log('restart')
-    thermo = thermo2
-    log(thermo)
+if not args.restart:
+    if os.path.isfile(thermo):
+        restart = True
+        log('restart')
+        log(thermo)
+    elif os.path.isfile(thermo2):
+        restart = True
+        log('restart')
+        thermo = thermo2
+        log(thermo)
+    else:
+        restart = False
 else:
     restart = False
 
@@ -147,7 +155,10 @@ else:
     mu_arg = ''
 
 if restart:
-    routine = 'in.segregation_gb_r'
+    if args.ms:
+        routine = 'in.segregation_ms_r'
+    else:
+        routine = 'in.segregation_gb_r'
     struct_flag = ''
     if mu_arg == '':
         flag = False
@@ -162,7 +173,10 @@ if restart:
         if (not flag) and continue_flag:
             mu_arg = f'-var mu0 {last_mu} '
 else:
-    routine = 'in.segregation_gb'
+    if args.ms:
+        routine = 'in.segregation_ms'
+    else:
+        routine = 'in.segregation_gb'
     struct_flag = f'-var structure_name {structure} '
 
 
@@ -184,7 +198,7 @@ step = {step_ind}/{len(conc_range)}
     else:
         suffix = f' -sf omp -pk omp {job} '
     
-    task = (f'mpirun --bind-to core -np {args.np} lmp_intel_cpu_openmpi -in  {routine} ' + mu_arg +
+    task = (f'mpirun -np {args.np} {lmp} -in  {routine} ' + mu_arg +
             f'-var name {name} ' + 
             struct_flag + ' ' +
             f'-var conc_f {conc_range[step_ind]} -var kappa_f {args.kappa} ' + 
@@ -232,7 +246,7 @@ step = {step_ind}/{len(conc_range)}
                 Path(impath).mkdir(exist_ok=True)  
                 parser_ = argparse.ArgumentParser()
                 plot_args = parser_.parse_args('')
-                fname = f'../workspace/{name}/segregarion_plot.txt'
+                fname = f'../workspace/{name}/segregation_plot.txt'
                 flag1=False
                 flag2=False
                 flag3=False
@@ -261,7 +275,7 @@ step = {step_ind}/{len(conc_range)}
                             flag6=True
                 flag = (flag1 and flag2 and flag3 and flag4 and flag5 and flag6)
                 if not flag:
-                    raise ValueError(f'incorrect segregarion_plot.txt')
+                    raise ValueError(f'incorrect segregation_plot.txt')
                 
                 plot_args.name = args.name
                 plot_args.src = src
